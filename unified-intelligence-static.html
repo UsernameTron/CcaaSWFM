@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Unified Operations Intelligence — Technical Architecture</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg: #09090b;
+    --surface: #111113;
+    --surface-alt: #18181b;
+    --border: #27272a;
+    --text: #fafafa;
+    --text-secondary: #a1a1aa;
+    --text-muted: #71717a;
+    --accent: #22d3ee;
+    --accent-muted: rgba(34, 211, 238, 0.08);
+    --accent-border: rgba(34, 211, 238, 0.25);
+    --success: #4ade80;
+    --error: #ef4444;
+    --warning: #fbbf24;
+    --purple: #c084fc;
+    --mono: 'JetBrains Mono', monospace;
+    --sans: 'Plus Jakarta Sans', system-ui, sans-serif;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    min-height: 100vh;
+  }
+
+  .header {
+    border-bottom: 1px solid var(--border);
+    padding: 20px 32px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+  }
+
+  .header-label {
+    font-size: 9px; font-weight: 500; letter-spacing: 0.12em;
+    color: var(--accent); text-transform: uppercase; margin-bottom: 4px;
+  }
+
+  .header-title { font-size: 20px; font-weight: 400; }
+
+  .header-metrics { display: flex; gap: 48px; align-items: baseline; }
+
+  .hm-val {
+    font-family: var(--mono); font-size: 28px; font-weight: 600;
+    color: var(--accent); letter-spacing: -0.02em;
+  }
+
+  .hm-label { font-size: 11px; color: var(--text-muted); margin-left: 6px; }
+
+  .context-bar {
+    padding: 14px 32px; border-bottom: 1px solid var(--border);
+    background: var(--surface); font-size: 12px; color: var(--text-secondary);
+    display: flex; justify-content: space-between;
+  }
+
+  .context-bar .hl { color: var(--accent); font-weight: 600; }
+
+  .main {
+    display: grid; grid-template-columns: 1fr 380px;
+    min-height: calc(100vh - 140px);
+  }
+
+  .center { padding: 28px 32px; border-right: 1px solid var(--border); }
+  .right { padding: 24px; background: var(--surface); }
+
+  .sl {
+    font-size: 9px; font-weight: 500; letter-spacing: 0.1em;
+    color: var(--text-muted); text-transform: uppercase; margin-bottom: 14px;
+  }
+
+  /* ── Code Blocks ── */
+  .code-block {
+    background: var(--surface-alt);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 16px 20px;
+    margin-bottom: 20px;
+    overflow-x: auto;
+  }
+
+  .code-block pre {
+    font-family: var(--mono);
+    font-size: 11px;
+    line-height: 1.7;
+    color: var(--text-secondary);
+    white-space: pre;
+    margin: 0;
+  }
+
+  .code-block .comment { color: var(--text-muted); }
+  .code-block .keyword { color: var(--accent); }
+  .code-block .string { color: var(--success); }
+  .code-block .func { color: #fbbf24; }
+  .code-block .num { color: var(--purple); }
+  .code-block .type { color: #fb7185; }
+
+  .code-label {
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 0.08em;
+    color: var(--accent);
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+
+  /* ── Integration Map ── */
+  .int-map {
+    display: grid;
+    grid-template-columns: 160px 40px 1fr 40px 160px;
+    align-items: center;
+    gap: 0;
+    margin-bottom: 24px;
+  }
+
+  .int-source, .int-target {
+    padding: 14px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+  }
+
+  .int-source-name, .int-target-name {
+    font-size: 12px; font-weight: 600; margin-bottom: 4px;
+  }
+
+  .int-source-detail, .int-target-detail {
+    font-size: 10px; color: var(--text-muted); line-height: 1.5;
+  }
+
+  .int-arrow {
+    text-align: center;
+    font-family: var(--mono); font-size: 14px; color: var(--accent);
+  }
+
+  .int-middleware {
+    padding: 12px 16px;
+    background: var(--accent-muted);
+    border: 1px solid var(--accent-border);
+    border-radius: 6px;
+    text-align: center;
+  }
+
+  .int-mw-label {
+    font-family: var(--mono); font-size: 9px;
+    color: var(--accent); letter-spacing: 0.08em;
+    margin-bottom: 4px;
+  }
+
+  .int-mw-name {
+    font-size: 12px; font-weight: 600;
+  }
+
+  .int-mw-detail {
+    font-size: 10px; color: var(--text-secondary); margin-top: 4px;
+  }
+
+  /* ── Connector Cards ── */
+  .connector-stack {
+    display: grid; grid-template-columns: 1fr; gap: 3px;
+    margin-bottom: 24px;
+  }
+
+  .connector-row {
+    display: grid;
+    grid-template-columns: 120px 1fr 100px 100px;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+  }
+
+  .conn-platform {
+    font-family: var(--mono); font-size: 11px;
+    font-weight: 600; color: var(--accent);
+  }
+
+  .conn-endpoint {
+    font-size: 11px; color: var(--text-secondary);
+  }
+
+  .conn-method {
+    font-family: var(--mono); font-size: 10px;
+    text-align: center; padding: 2px 8px;
+    border-radius: 3px;
+  }
+
+  .conn-method.get { background: rgba(74, 222, 128, 0.1); color: var(--success); }
+  .conn-method.post { background: rgba(34, 211, 238, 0.1); color: var(--accent); }
+  .conn-method.webhook { background: rgba(251, 191, 36, 0.1); color: var(--warning); }
+
+  .conn-freq {
+    font-family: var(--mono); font-size: 10px;
+    color: var(--text-muted); text-align: right;
+  }
+
+  /* ── Schema ── */
+  .schema-table {
+    width: 100%; border-collapse: collapse; margin-bottom: 20px;
+  }
+
+  .schema-table th {
+    font-size: 9px; font-weight: 500; letter-spacing: 0.08em;
+    color: var(--text-muted); text-transform: uppercase;
+    padding: 8px 12px; text-align: left;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .schema-table td {
+    padding: 8px 12px; font-size: 11px;
+    color: var(--text-secondary); border-bottom: 1px solid var(--border);
+    vertical-align: top; line-height: 1.5;
+  }
+
+  .schema-table td:first-child {
+    font-family: var(--mono); color: var(--accent); font-weight: 500; white-space: nowrap;
+  }
+
+  .type-badge {
+    display: inline-block; padding: 1px 6px; border-radius: 3px;
+    font-family: var(--mono); font-size: 9px;
+  }
+  .type-badge.str { background: rgba(74, 222, 128, 0.1); color: var(--success); }
+  .type-badge.int { background: rgba(192, 132, 252, 0.1); color: var(--purple); }
+  .type-badge.obj { background: rgba(34, 211, 238, 0.1); color: var(--accent); }
+  .type-badge.ts { background: rgba(251, 191, 36, 0.1); color: var(--warning); }
+  .type-badge.arr { background: rgba(251, 113, 133, 0.1); color: #fb7185; }
+
+  /* ── Right Panel ── */
+  .rs { margin-bottom: 26px; }
+
+  .insight-card {
+    padding: 14px; border-left: 3px solid var(--accent);
+    background: var(--surface-alt); border-radius: 0 6px 6px 0;
+    margin-bottom: 14px;
+  }
+
+  .ic-label {
+    font-size: 9px; font-weight: 500; letter-spacing: 0.1em;
+    color: var(--accent); text-transform: uppercase; margin-bottom: 6px;
+  }
+
+  .ic-text {
+    font-size: 11px; color: var(--text-secondary); line-height: 1.6;
+  }
+  .ic-text strong { color: var(--text); font-weight: 600; }
+
+  .tech-tag {
+    display: inline-block; padding: 3px 8px;
+    background: var(--surface-alt); border: 1px solid var(--border);
+    border-radius: 4px; font-size: 10px; font-family: var(--mono);
+    color: var(--text-secondary); margin: 0 5px 5px 0;
+  }
+
+  .metric-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 8px 0; border-bottom: 1px solid var(--border);
+  }
+  .mr-label { font-size: 11px; color: var(--text-secondary); }
+  .mr-val { font-family: var(--mono); font-size: 13px; font-weight: 600; }
+  .mr-val.accent { color: var(--accent); }
+  .mr-val.positive { color: var(--success); }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <div class="header-label">Technical Architecture — Multi-Platform Integration Layer</div>
+    <div class="header-title">Unified Operations Intelligence Engine</div>
+  </div>
+  <div class="header-metrics">
+    <div>
+      <span class="hm-val">3→1</span>
+      <span class="hm-label">platforms unified</span>
+    </div>
+    <div>
+      <span class="hm-val">18</span>
+      <span class="hm-label">automated reports</span>
+    </div>
+  </div>
+</div>
+
+<div class="context-bar">
+  <div><span class="hl">Architecture:</span> Custom MCP integration layer connecting CCaaS + WFM + Helpdesk APIs into normalized data model with real-time anomaly detection</div>
+  <div><span class="hl">ISPN Network Services</span> · 150+ agents</div>
+</div>
+
+<div class="main">
+  <div class="center">
+
+    <div class="sl">API Connector Map — Endpoints and Extraction Patterns</div>
+
+    <div class="connector-stack">
+      <div class="connector-row" style="background: var(--surface-alt); border: none;">
+        <div style="font-size: 9px; color: var(--text-muted); letter-spacing: 0.08em; text-transform: uppercase;">Platform</div>
+        <div style="font-size: 9px; color: var(--text-muted); letter-spacing: 0.08em; text-transform: uppercase;">Endpoint / Data</div>
+        <div style="font-size: 9px; color: var(--text-muted); letter-spacing: 0.08em; text-transform: uppercase; text-align: center;">Method</div>
+        <div style="font-size: 9px; color: var(--text-muted); letter-spacing: 0.08em; text-transform: uppercase; text-align: right;">Frequency</div>
+      </div>
+      <div class="connector-row">
+        <div class="conn-platform">Genesys Cloud</div>
+        <div class="conn-endpoint">/api/v2/analytics/conversations/details/query</div>
+        <div class="conn-method post">POST</div>
+        <div class="conn-freq">15 min</div>
+      </div>
+      <div class="connector-row">
+        <div class="conn-platform">Genesys Cloud</div>
+        <div class="conn-endpoint">/api/v2/analytics/queues/observations/query</div>
+        <div class="conn-method post">POST</div>
+        <div class="conn-freq">5 min</div>
+      </div>
+      <div class="connector-row">
+        <div class="conn-platform">Genesys Cloud</div>
+        <div class="conn-endpoint">/api/v2/users/{id}/routingstatus</div>
+        <div class="conn-method get">GET</div>
+        <div class="conn-freq">5 min</div>
+      </div>
+      <div class="connector-row">
+        <div class="conn-platform">Genesys Cloud</div>
+        <div class="conn-endpoint">/api/v2/quality/evaluations/query</div>
+        <div class="conn-method post">POST</div>
+        <div class="conn-freq">daily</div>
+      </div>
+      <div class="connector-row">
+        <div class="conn-platform">UKG</div>
+        <div class="conn-endpoint">/api/v1/timekeeping/timecard/multi_read</div>
+        <div class="conn-method post">POST</div>
+        <div class="conn-freq">daily</div>
+      </div>
+      <div class="connector-row">
+        <div class="conn-platform">UKG</div>
+        <div class="conn-endpoint">/api/v1/scheduling/schedule/multi_read</div>
+        <div class="conn-method post">POST</div>
+        <div class="conn-freq">daily</div>
+      </div>
+      <div class="connector-row">
+        <div class="conn-platform">Helpdesk</div>
+        <div class="conn-endpoint">/api/tickets (filtered by date, status, category)</div>
+        <div class="conn-method get">GET</div>
+        <div class="conn-freq">30 min</div>
+      </div>
+      <div class="connector-row">
+        <div class="conn-platform">Helpdesk</div>
+        <div class="conn-endpoint">Event: ticket.escalated → webhook listener</div>
+        <div class="conn-method webhook">WEBHOOK</div>
+        <div class="conn-freq">real-time</div>
+      </div>
+    </div>
+
+    <div class="sl">MCP Server Architecture — Tool Registration</div>
+
+    <div class="code-block">
+      <div class="code-label">mcp_server.py — tool registration pattern</div>
+      <pre><span class="keyword">from</span> mcp.server <span class="keyword">import</span> Server
+<span class="keyword">from</span> mcp.types <span class="keyword">import</span> Tool, TextContent
+
+server = Server(<span class="string">"ispn-operations"</span>)
+
+<span class="keyword">@server.tool</span>()
+<span class="keyword">async def</span> <span class="func">get_daily_performance</span>(date: str) -> <span class="type">list</span>[TextContent]:
+    <span class="comment">"""Fetch and correlate daily metrics across all platforms."""</span>
+    
+    <span class="comment"># Parallel extraction from all three sources</span>
+    calls, schedule, tickets = <span class="keyword">await</span> asyncio.<span class="func">gather</span>(
+        genesys.<span class="func">get_conversation_metrics</span>(date),
+        ukg.<span class="func">get_schedule_adherence</span>(date),
+        helpdesk.<span class="func">get_ticket_summary</span>(date)
+    )
+    
+    <span class="comment"># Normalize into unified performance model</span>
+    perf = <span class="type">DailyPerformance</span>(
+        date=date,
+        calls=<span class="func">normalize_call_metrics</span>(calls),
+        staffing=<span class="func">normalize_schedule</span>(schedule),
+        tickets=<span class="func">normalize_tickets</span>(tickets),
+    )
+    
+    <span class="comment"># Cross-platform correlation</span>
+    perf.anomalies = <span class="func">detect_cross_platform_anomalies</span>(perf)
+    perf.cost_per_contact = <span class="func">calculate_cpc</span>(
+        labor_hours=perf.staffing.actual_hours,
+        call_volume=perf.calls.total_handled,
+        blended_rate=<span class="num">19.50</span>
+    )
+    
+    <span class="keyword">return</span> [TextContent(text=perf.<span class="func">to_report</span>())]
+
+<span class="keyword">@server.tool</span>()
+<span class="keyword">async def</span> <span class="func">detect_anomaly</span>(metric: str, window: str) -> <span class="type">list</span>[TextContent]:
+    <span class="comment">"""Real-time anomaly detection across correlated metrics."""</span>
+    
+    <span class="comment"># Pull metric from appropriate source</span>
+    current = <span class="keyword">await</span> <span class="func">get_metric_value</span>(metric, window)
+    baseline = <span class="keyword">await</span> <span class="func">get_rolling_baseline</span>(metric, days=<span class="num">30</span>)
+    
+    <span class="comment"># Check for correlated anomalies across platforms</span>
+    <span class="comment"># AHT spike + ticket surge + attendance drop = system issue</span>
+    correlations = <span class="keyword">await</span> <span class="func">check_correlated_metrics</span>(metric, window)
+    
+    <span class="keyword">return</span> [TextContent(text=<span class="func">format_anomaly_report</span>(
+        current, baseline, correlations
+    ))]</pre>
+    </div>
+
+    <div class="sl">Data Normalization Layer — Unified Schema</div>
+
+    <div class="code-block">
+      <div class="code-label">normalize.py — cross-platform data model</div>
+      <pre><span class="keyword">@dataclass</span>
+<span class="keyword">class</span> <span class="type">UnifiedAgentRecord</span>:
+    <span class="comment">"""Single agent view across all platforms."""</span>
+    agent_id: str           <span class="comment"># Canonical ID (mapped from platform-specific IDs)</span>
+    
+    <span class="comment"># From CCaaS (Genesys Cloud)</span>
+    calls_handled: <span class="keyword">int</span>
+    aht_seconds: <span class="keyword">float</span>
+    fcr_rate: <span class="keyword">float</span>
+    hold_time_avg: <span class="keyword">float</span>
+    transfers_out: <span class="keyword">int</span>
+    
+    <span class="comment"># From WFM (UKG)</span>
+    scheduled_hours: <span class="keyword">float</span>
+    actual_hours: <span class="keyword">float</span>
+    adherence_pct: <span class="keyword">float</span>
+    in_queue_hours: <span class="keyword">float</span>     <span class="comment"># Calculated: actual - (breaks + training + meetings)</span>
+    schedule_efficiency: <span class="keyword">float</span> <span class="comment"># in_queue / scheduled</span>
+    
+    <span class="comment"># From Helpdesk</span>
+    tickets_created: <span class="keyword">int</span>
+    escalation_count: <span class="keyword">int</span>
+    avg_resolution_min: <span class="keyword">float</span>
+    
+    <span class="comment"># Computed cross-platform</span>
+    utilization: <span class="keyword">float</span>       <span class="comment"># (handle_time * calls) / in_queue_seconds</span>
+    cost_per_contact: <span class="keyword">float</span>  <span class="comment"># (actual_hours * blended_rate) / calls_handled</span>
+    composite_score: <span class="keyword">float</span>   <span class="comment"># Weighted: FCR(30%) + CSAT(25%) + AHT(20%) + Adherence(15%) + QA(10%)</span>
+
+<span class="keyword">def</span> <span class="func">resolve_agent_id</span>(platform: str, platform_id: str) -> str:
+    <span class="comment">"""Map platform-specific agent IDs to canonical ID.
+    Genesys uses UUID, UKG uses employee_number, Helpdesk uses email.
+    Lookup table maintained in agent_roster with all three mappings."""</span>
+    <span class="keyword">return</span> roster_cache.<span class="func">get</span>(f<span class="string">"{platform}:{platform_id}"</span>)</pre>
+    </div>
+
+    <div class="sl">Cross-Platform Anomaly Correlation</div>
+
+    <table class="schema-table">
+      <thead>
+        <tr><th>Signal Combination</th><th>Detection Logic</th><th>Classification</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>AHT↑ + Tickets↑ + Adherence→</td>
+          <td>AHT z-score > 2.0 AND ticket volume > 1.5x baseline AND adherence normal — system latency or tooling issue</td>
+          <td style="color: var(--warning);">SYSTEMIC</td>
+        </tr>
+        <tr>
+          <td>AHT↑ + Tickets→ + Adherence↓</td>
+          <td>AHT z-score > 2.0 AND tickets normal AND adherence < 85% — staffing/scheduling gap</td>
+          <td style="color: var(--warning);">STAFFING</td>
+        </tr>
+        <tr>
+          <td>Volume↑↑ + SL↓ + Abandon↑</td>
+          <td>Volume > 2σ above forecast AND SL < 70% AND abandon > 8% — demand spike, trigger Erlang C recalc</td>
+          <td style="color: var(--error);">CAPACITY</td>
+        </tr>
+        <tr>
+          <td>FCR↓ + Tickets↑ + QA→</td>
+          <td>FCR drops > 5pts AND repeat tickets by category AND QA scores stable — process/knowledge gap</td>
+          <td style="color: #fb7185;">PROCESS</td>
+        </tr>
+      </tbody>
+    </table>
+
+  </div>
+
+  <div class="right">
+
+    <div class="rs">
+      <div class="sl">Architecture Decisions</div>
+      <div class="insight-card">
+        <div class="ic-label">Why MCP Over Direct API Wrappers</div>
+        <div class="ic-text">
+          Direct API wrappers create <strong>N×M integration complexity</strong> — every consumer needs to know every platform's schema. MCP provides a <strong>tool-use abstraction layer</strong>: consumers describe what they need ("daily performance for Jan 15"), the server handles multi-platform extraction, normalization, and correlation. Add a new platform? One new connector, zero consumer changes.
+        </div>
+      </div>
+      <div class="insight-card">
+        <div class="ic-label">Why Agent ID Resolution Layer</div>
+        <div class="ic-text">
+          Genesys uses <strong>UUIDs</strong>, UKG uses <strong>employee numbers</strong>, Helpdesk uses <strong>email addresses</strong>. Without a canonical mapping, cross-platform joins are impossible. The roster cache (Redis, 5-min TTL) resolves any platform ID to canonical in <strong>&lt;2ms</strong>. Agent onboard/offboard events trigger cache invalidation.
+        </div>
+      </div>
+      <div class="insight-card">
+        <div class="ic-label">Why Multi-Signal Anomaly Detection</div>
+        <div class="ic-text">
+          Single-metric alerts generate <strong>noise</strong>. AHT spikes happen for legitimate reasons. But AHT spike + ticket surge + normal adherence is a <strong>specific diagnostic pattern</strong> — system latency, not agent performance. Cross-platform correlation turns alerts into <strong>actionable intelligence with root cause attribution</strong>.
+        </div>
+      </div>
+    </div>
+
+    <div class="rs">
+      <div class="sl">Tech Stack</div>
+      <div style="margin-top: 4px;">
+        <span class="tech-tag">Python 3.11</span>
+        <span class="tech-tag">MCP SDK</span>
+        <span class="tech-tag">asyncio</span>
+        <span class="tech-tag">Genesys Cloud API</span>
+        <span class="tech-tag">UKG API</span>
+        <span class="tech-tag">REST / Webhooks</span>
+        <span class="tech-tag">Redis (cache)</span>
+        <span class="tech-tag">PostgreSQL</span>
+        <span class="tech-tag">pandas</span>
+        <span class="tech-tag">n8n (orchestration)</span>
+        <span class="tech-tag">Erlang C (scipy)</span>
+        <span class="tech-tag">Power BI</span>
+      </div>
+    </div>
+
+    <div class="rs">
+      <div class="sl">Integration Metrics</div>
+      <div class="metric-row">
+        <div class="mr-label">API endpoints integrated</div>
+        <div class="mr-val accent">12</div>
+      </div>
+      <div class="metric-row">
+        <div class="mr-label">Data refresh (queue metrics)</div>
+        <div class="mr-val accent">5 min</div>
+      </div>
+      <div class="metric-row">
+        <div class="mr-label">Agent ID resolution (p99)</div>
+        <div class="mr-val accent">&lt;2ms</div>
+      </div>
+      <div class="metric-row">
+        <div class="mr-label">Daily report generation</div>
+        <div class="mr-val positive">automated 7am</div>
+      </div>
+      <div class="metric-row">
+        <div class="mr-label">Historical trend depth</div>
+        <div class="mr-val accent">104 weeks</div>
+      </div>
+      <div class="metric-row">
+        <div class="mr-label">Manual report hours saved</div>
+        <div class="mr-val positive">20+ hrs/wk</div>
+      </div>
+      <div class="metric-row">
+        <div class="mr-label">Annual cost savings identified</div>
+        <div class="mr-val accent">$1M+</div>
+      </div>
+    </div>
+
+    <div class="rs">
+      <div class="sl">Applicability Note</div>
+      <div class="ic-text" style="font-size: 11px; color: var(--text-muted); line-height: 1.6;">
+        This integration architecture applies to any multi-vendor contact center stack. Replace Genesys with <strong style="color: var(--text-secondary);">NICE CXone</strong>, add connectors for <strong style="color: var(--text-secondary);">Cognigy</strong> (conversation AI) and <strong style="color: var(--text-secondary);">Observe.AI</strong> (QA analytics) — the MCP abstraction layer, agent ID resolution, and cross-platform anomaly correlation remain identical.
+      </div>
+    </div>
+
+  </div>
+</div>
+
+</body>
+</html>

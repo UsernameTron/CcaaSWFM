@@ -1,0 +1,1031 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Systemic-First Quality Intelligence — Interactive Architecture</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg: #09090b;
+    --surface: #111113;
+    --surface-alt: #18181b;
+    --border: #27272a;
+    --border-hover: #3f3f46;
+    --text: #fafafa;
+    --text-secondary: #a1a1aa;
+    --text-muted: #71717a;
+    --accent: #fb7185;
+    --accent-muted: rgba(251, 113, 133, 0.08);
+    --accent-border: rgba(251, 113, 133, 0.25);
+    --accent-glow: rgba(251, 113, 133, 0.15);
+    --success: #4ade80;
+    --error: #ef4444;
+    --warning: #fbbf24;
+    --cyan: #22d3ee;
+    --purple: #c084fc;
+    --mono: 'JetBrains Mono', monospace;
+    --sans: 'Plus Jakarta Sans', system-ui, sans-serif;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    min-height: 100vh;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .header {
+    border-bottom: 1px solid var(--border);
+    padding: 20px 32px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+  }
+
+  .header-label {
+    font-size: 9px; font-weight: 500; letter-spacing: 0.12em;
+    color: var(--accent); text-transform: uppercase; margin-bottom: 4px;
+  }
+
+  .header-title { font-size: 20px; font-weight: 400; }
+
+  .header-metrics { display: flex; gap: 40px; align-items: baseline; }
+
+  .hm-val {
+    font-family: var(--mono); font-size: 26px; font-weight: 600;
+    color: var(--accent); letter-spacing: -0.02em;
+  }
+
+  .hm-label { font-size: 11px; color: var(--text-muted); margin-left: 6px; }
+
+  /* ── Tab Nav ── */
+  .tab-nav {
+    display: flex;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+    padding: 0 32px;
+  }
+
+  .tab {
+    padding: 12px 24px;
+    font-size: 11px; font-weight: 500;
+    letter-spacing: 0.05em; color: var(--text-muted);
+    cursor: pointer; border-bottom: 2px solid transparent;
+    transition: all 0.2s; text-transform: uppercase;
+    user-select: none;
+  }
+
+  .tab:hover { color: var(--text-secondary); }
+  .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+  .panel { display: none; }
+  .panel.active { display: block; }
+
+  .panel-content { padding: 28px 32px; max-width: 1400px; }
+
+  .sl {
+    font-size: 9px; font-weight: 500; letter-spacing: 0.1em;
+    color: var(--text-muted); text-transform: uppercase; margin-bottom: 16px;
+  }
+
+  /* ── Scenario Cards (Panel 1) ── */
+  .scenario-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+
+  .scenario-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 20px;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    position: relative;
+  }
+
+  .scenario-card:hover { border-color: var(--border-hover); }
+
+  .scenario-card.selected {
+    border-color: var(--accent-border);
+    background: var(--accent-muted);
+  }
+
+  .sc-symptom {
+    font-size: 14px; font-weight: 600; margin-bottom: 6px;
+  }
+
+  .sc-detail {
+    font-size: 12px; color: var(--text-secondary); line-height: 1.5;
+    margin-bottom: 10px;
+  }
+
+  .sc-data {
+    display: flex; gap: 16px;
+    font-family: var(--mono); font-size: 10px; color: var(--text-muted);
+  }
+
+  .sc-data span { display: flex; align-items: center; gap: 4px; }
+
+  /* ── Classification Engine Display ── */
+  .engine-display {
+    display: grid;
+    grid-template-columns: 1fr 380px;
+    gap: 24px;
+    margin-bottom: 24px;
+  }
+
+  .gate-sequence {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+
+  .gate {
+    padding: 16px 24px;
+    border-bottom: 1px solid var(--border);
+    display: grid;
+    grid-template-columns: 80px 1fr 90px;
+    align-items: center;
+    gap: 16px;
+    transition: all 0.4s ease;
+    opacity: 0.35;
+  }
+
+  .gate:last-child { border-bottom: none; }
+
+  .gate.checking {
+    opacity: 1;
+    background: rgba(34, 211, 238, 0.04);
+  }
+
+  .gate.passed {
+    opacity: 0.6;
+  }
+
+  .gate.triggered {
+    opacity: 1;
+    background: var(--accent-muted);
+  }
+
+  .gate-id {
+    font-family: var(--mono); font-size: 10px;
+    letter-spacing: 0.08em; color: var(--text-muted);
+  }
+
+  .gate.triggered .gate-id { color: var(--accent); }
+  .gate.checking .gate-id { color: var(--cyan); }
+
+  .gate-name {
+    font-size: 13px; font-weight: 500;
+  }
+
+  .gate-desc {
+    font-size: 11px; color: var(--text-secondary); margin-top: 2px;
+  }
+
+  .gate-status {
+    font-family: var(--mono); font-size: 10px;
+    text-align: right; font-weight: 600;
+    letter-spacing: 0.05em;
+  }
+
+  .gate-status.pending { color: var(--text-muted); }
+  .gate-status.pass { color: var(--success); }
+  .gate-status.fail { color: var(--text-muted); }
+  .gate-status.trigger { color: var(--accent); }
+
+  /* ── Result Panel ── */
+  .result-panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    min-height: 400px;
+  }
+
+  .result-waiting {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 13px;
+  }
+
+  .result-content { display: none; }
+  .result-content.visible { display: block; }
+
+  .result-class {
+    font-family: var(--mono); font-size: 11px;
+    letter-spacing: 0.08em; text-transform: uppercase;
+    padding: 5px 14px; border-radius: 4px;
+    display: inline-block; margin-bottom: 16px;
+    font-weight: 600;
+  }
+
+  .result-class.systemic {
+    background: rgba(251, 191, 36, 0.12); color: var(--warning);
+    border: 1px solid rgba(251, 191, 36, 0.3);
+  }
+
+  .result-class.cohort {
+    background: var(--accent-muted); color: var(--accent);
+    border: 1px solid var(--accent-border);
+  }
+
+  .result-class.individual {
+    background: rgba(74, 222, 128, 0.12); color: var(--success);
+    border: 1px solid rgba(74, 222, 128, 0.3);
+  }
+
+  .result-title {
+    font-size: 16px; font-weight: 600; margin-bottom: 8px;
+  }
+
+  .result-detail {
+    font-size: 12px; color: var(--text-secondary); line-height: 1.7;
+    margin-bottom: 20px;
+  }
+
+  .result-action {
+    padding: 14px;
+    border-radius: 6px;
+    margin-bottom: 12px;
+  }
+
+  .result-action.do {
+    border-left: 3px solid var(--success);
+    background: rgba(74, 222, 128, 0.04);
+  }
+
+  .result-action.dont {
+    border-left: 3px solid var(--error);
+    background: rgba(239, 68, 68, 0.04);
+  }
+
+  .ra-label {
+    font-size: 9px; font-weight: 600; letter-spacing: 0.08em;
+    text-transform: uppercase; margin-bottom: 4px;
+  }
+
+  .result-action.do .ra-label { color: var(--success); }
+  .result-action.dont .ra-label { color: var(--error); }
+
+  .ra-text {
+    font-size: 12px; color: var(--text-secondary); line-height: 1.5;
+  }
+
+  .coaching-blocked {
+    font-family: var(--mono); font-size: 11px;
+    color: var(--error); background: rgba(239, 68, 68, 0.08);
+    border: 1px solid rgba(239, 68, 68, 0.2);
+    padding: 10px 14px; border-radius: 6px;
+    margin-bottom: 12px; text-align: center;
+    font-weight: 600; letter-spacing: 0.05em;
+  }
+
+  .coaching-allowed {
+    font-family: var(--mono); font-size: 11px;
+    color: var(--success); background: rgba(74, 222, 128, 0.08);
+    border: 1px solid rgba(74, 222, 128, 0.2);
+    padding: 10px 14px; border-radius: 6px;
+    margin-bottom: 12px; text-align: center;
+    font-weight: 600; letter-spacing: 0.05em;
+  }
+
+  /* ── Code Block ── */
+  .code-block {
+    background: var(--surface-alt);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    overflow: hidden;
+    margin-bottom: 20px;
+  }
+
+  .code-header {
+    padding: 10px 20px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+
+  .code-header:hover { background: rgba(255,255,255,0.02); }
+
+  .code-label {
+    font-family: var(--mono); font-size: 10px;
+    letter-spacing: 0.06em; color: var(--accent); text-transform: uppercase;
+  }
+
+  .code-toggle {
+    font-size: 11px; color: var(--text-muted);
+    transition: transform 0.3s ease;
+  }
+
+  .code-toggle.open { transform: rotate(180deg); }
+
+  .code-body {
+    padding: 0 20px;
+    max-height: 0; overflow: hidden;
+    transition: max-height 0.4s ease, padding 0.3s ease;
+  }
+
+  .code-body.open {
+    max-height: 800px;
+    padding: 16px 20px;
+  }
+
+  .code-body pre {
+    font-family: var(--mono); font-size: 11px;
+    line-height: 1.7; color: var(--text-secondary);
+    white-space: pre; margin: 0;
+  }
+
+  .cm { color: var(--text-muted); }
+  .kw { color: var(--accent); }
+  .st { color: var(--success); }
+  .fn { color: var(--warning); }
+  .nm { color: var(--purple); }
+  .tp { color: var(--cyan); }
+
+  /* ── Insight Cards ── */
+  .insight-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px; margin-bottom: 24px;
+  }
+
+  .insight-card {
+    padding: 18px;
+    border-left: 3px solid var(--accent);
+    background: var(--surface);
+    border-radius: 0 8px 8px 0;
+  }
+
+  .ic-label {
+    font-size: 9px; font-weight: 500; letter-spacing: 0.1em;
+    color: var(--accent); text-transform: uppercase; margin-bottom: 8px;
+  }
+
+  .ic-text {
+    font-size: 12px; color: var(--text-secondary); line-height: 1.6;
+  }
+
+  .ic-text strong { color: var(--text); font-weight: 600; }
+
+  .tech-row {
+    display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 24px;
+  }
+
+  .tech-tag {
+    padding: 4px 10px;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 4px; font-size: 10px;
+    font-family: var(--mono); color: var(--text-secondary);
+  }
+
+  /* ── Metrics Strip ── */
+  .metrics-strip {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 16px; padding: 20px 32px;
+    border-top: 1px solid var(--border);
+    background: var(--surface);
+  }
+
+  .ms-item { text-align: center; }
+
+  .ms-val {
+    font-family: var(--mono); font-size: 20px;
+    font-weight: 600; color: var(--accent);
+    letter-spacing: -0.02em;
+  }
+
+  .ms-label {
+    font-size: 9px; color: var(--text-muted);
+    letter-spacing: 0.06em; text-transform: uppercase; margin-top: 4px;
+  }
+
+  /* ── Run Button ── */
+  .run-btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 10px 24px;
+    background: var(--accent-muted);
+    border: 1px solid var(--accent-border);
+    border-radius: 6px;
+    color: var(--accent);
+    font-family: var(--mono); font-size: 11px;
+    font-weight: 600; letter-spacing: 0.05em;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-transform: uppercase;
+    margin-bottom: 24px;
+  }
+
+  .run-btn:hover {
+    background: rgba(251, 113, 133, 0.15);
+    border-color: var(--accent);
+  }
+
+  .run-btn:disabled {
+    opacity: 0.4; cursor: default;
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <div class="header-label">Interactive Architecture — QA Classification Engine</div>
+    <div class="header-title">Systemic-First Quality Intelligence</div>
+  </div>
+  <div class="header-metrics">
+    <div>
+      <span class="hm-val">100%</span>
+      <span class="hm-label">monitoring</span>
+    </div>
+    <div>
+      <span class="hm-val">60%</span>
+      <span class="hm-label">systemic root cause</span>
+    </div>
+    <div>
+      <span class="hm-val">93%</span>
+      <span class="hm-label">FCR achieved</span>
+    </div>
+  </div>
+</div>
+
+<div class="tab-nav">
+  <div class="tab active" data-panel="scenarios">Scenario Simulator</div>
+  <div class="tab" data-panel="engine">Classification Engine</div>
+  <div class="tab" data-panel="decisions">Architecture Decisions</div>
+</div>
+
+<!-- ═══ PANEL 1: SCENARIO SIMULATOR ═══ -->
+<div class="panel active" id="panel-scenarios">
+  <div class="panel-content">
+
+    <div class="sl">Select a QA failure scenario — watch the classification engine process it through all five gates</div>
+
+    <div class="scenario-grid">
+      <div class="scenario-card" onclick="selectScenario(0)">
+        <div class="sc-symptom">15 agents fail "accurate information" criterion</div>
+        <div class="sc-detail">Standard QA response: schedule 15 individual coaching sessions on accuracy. But should you?</div>
+        <div class="sc-data">
+          <span>Agents failing: <strong style="color:var(--accent)">15</strong></span>
+          <span>Eval period: <strong style="color:var(--accent)">Mon–Fri</strong></span>
+          <span>Criterion: <strong style="color:var(--accent)">Q7 Accuracy</strong></span>
+        </div>
+      </div>
+
+      <div class="scenario-card" onclick="selectScenario(1)">
+        <div class="sc-symptom">AHT spikes 40% across all agents on Tuesday</div>
+        <div class="sc-detail">Supervisors flag agents as "taking too long." AHT coaching plans queued for 30+ agents.</div>
+        <div class="sc-data">
+          <span>AHT increase: <strong style="color:var(--accent)">+40%</strong></span>
+          <span>Agents affected: <strong style="color:var(--accent)">all</strong></span>
+          <span>Duration: <strong style="color:var(--accent)">6 hours</strong></span>
+        </div>
+      </div>
+
+      <div class="scenario-card" onclick="selectScenario(2)">
+        <div class="sc-symptom">Agent scores 62% on empathy — peer average is 88%</div>
+        <div class="sc-detail">Single agent consistently scoring low on soft skills. No one else showing similar pattern.</div>
+        <div class="sc-data">
+          <span>Agents failing: <strong style="color:var(--accent)">1</strong></span>
+          <span>Score: <strong style="color:var(--accent)">62%</strong></span>
+          <span>Peer avg: <strong style="color:var(--accent)">88%</strong></span>
+        </div>
+      </div>
+
+      <div class="scenario-card" onclick="selectScenario(3)">
+        <div class="sc-symptom">5 agents fail documentation — all hired in same month</div>
+        <div class="sc-detail">Documentation quality failures clustered in a specific group. Individual coaching plans generated.</div>
+        <div class="sc-data">
+          <span>Agents failing: <strong style="color:var(--accent)">5</strong></span>
+          <span>Hire cohort: <strong style="color:var(--accent)">Oct 2024</strong></span>
+          <span>Same trainer: <strong style="color:var(--accent)">Yes</strong></span>
+        </div>
+      </div>
+
+      <div class="scenario-card" onclick="selectScenario(4)">
+        <div class="sc-symptom">12 agents fail hold-time compliance</div>
+        <div class="sc-detail">Agents exceeding maximum hold time during customer interactions. Compliance team flagging for coaching.</div>
+        <div class="sc-data">
+          <span>Agents failing: <strong style="color:var(--accent)">12</strong></span>
+          <span>Avg hold: <strong style="color:var(--accent)">4.2 min</strong></span>
+          <span>Target: <strong style="color:var(--accent)">&lt;2 min</strong></span>
+        </div>
+      </div>
+
+      <div class="scenario-card" onclick="selectScenario(5)">
+        <div class="sc-symptom">2 agents consistently miss call opening script</div>
+        <div class="sc-detail">Same two agents flagged on multiple evaluations for missing required greeting elements.</div>
+        <div class="sc-data">
+          <span>Agents failing: <strong style="color:var(--accent)">2</strong></span>
+          <span>Evals failed: <strong style="color:var(--accent)">4 each</strong></span>
+          <span>Peer rate: <strong style="color:var(--accent)">96%</strong></span>
+        </div>
+      </div>
+    </div>
+
+    <button class="run-btn" id="run-btn" onclick="runEngine()" disabled>▶ Run Classification Engine</button>
+
+    <div class="engine-display">
+      <div class="gate-sequence" id="gate-sequence">
+        <div class="gate" id="gate-1">
+          <div class="gate-id">GATE 01</div>
+          <div>
+            <div class="gate-name">System Health Check</div>
+            <div class="gate-desc">Platform outages, latency spikes, or routing errors during eval window?</div>
+          </div>
+          <div class="gate-status pending" id="gs-1">—</div>
+        </div>
+        <div class="gate" id="gate-2">
+          <div class="gate-id">GATE 02</div>
+          <div>
+            <div class="gate-name">Pattern Width Analysis</div>
+            <div class="gate-desc">3+ agents failed same criterion? Failure rate &gt; 25% of evaluated pool?</div>
+          </div>
+          <div class="gate-status pending" id="gs-2">—</div>
+        </div>
+        <div class="gate" id="gate-3">
+          <div class="gate-id">GATE 03</div>
+          <div>
+            <div class="gate-name">Process Currency Check</div>
+            <div class="gate-desc">Was relevant SOP or knowledge base article updated within 7 days?</div>
+          </div>
+          <div class="gate-status pending" id="gs-3">—</div>
+        </div>
+        <div class="gate" id="gate-4">
+          <div class="gate-id">GATE 04</div>
+          <div>
+            <div class="gate-name">Routing Accuracy</div>
+            <div class="gate-desc">Were interactions correctly skill-matched? Agents had required system access?</div>
+          </div>
+          <div class="gate-status pending" id="gs-4">—</div>
+        </div>
+        <div class="gate" id="gate-5">
+          <div class="gate-id">GATE 05</div>
+          <div>
+            <div class="gate-name">Cohort Analysis</div>
+            <div class="gate-desc">Failing agents share hire date, trainer, shift, team, or site? Chi-squared p &lt; 0.05?</div>
+          </div>
+          <div class="gate-status pending" id="gs-5">—</div>
+        </div>
+      </div>
+
+      <div class="result-panel">
+        <div class="result-waiting" id="result-waiting">
+          ← Select a scenario and run the engine
+        </div>
+        <div class="result-content" id="result-content"></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══ PANEL 2: CLASSIFICATION ENGINE ═══ -->
+<div class="panel" id="panel-engine">
+  <div class="panel-content">
+
+    <div class="sl">Core Algorithm — Gate-Based Failure Classification</div>
+
+    <div class="code-block">
+      <div class="code-header" onclick="toggleCode('code1')">
+        <div class="code-label">systemic_detector.py — main classification logic</div>
+        <div class="code-toggle open" id="toggle-code1">▼</div>
+      </div>
+      <div class="code-body open" id="code1">
+        <pre><span class="kw">def</span> <span class="fn">classify_qa_failure</span>(
+    criterion_id: str,
+    failing_agents: <span class="tp">list</span>[str],
+    eval_window: <span class="tp">DateRange</span>,
+    context: <span class="tp">OperationalContext</span>
+) -> <span class="tp">FailureClassification</span>:
+    
+    <span class="cm"># GATE 1: System health during eval window</span>
+    system_events = context.<span class="fn">get_system_events</span>(eval_window)
+    has_outage = <span class="kw">any</span>(e.type <span class="kw">in</span> [<span class="st">"OUTAGE"</span>, <span class="st">"LATENCY_SPIKE"</span>, <span class="st">"ROUTING_ERROR"</span>]
+                     <span class="kw">for</span> e <span class="kw">in</span> system_events)
+    
+    n_failing = <span class="fn">len</span>(failing_agents)
+    total_eval = context.<span class="fn">agents_evaluated_on</span>(criterion_id, eval_window)
+    failure_rate = n_failing / total_eval
+    
+    <span class="cm"># GATE 2+1: Wide pattern + system event = SYSTEMIC</span>
+    <span class="kw">if</span> n_failing >= <span class="nm">3</span> <span class="kw">and</span> has_outage:
+        <span class="kw">return</span> <span class="tp">FailureClassification</span>(
+            type=<span class="st">"SYSTEMIC"</span>, root_cause=<span class="st">"SYSTEM_EVENT"</span>,
+            coaching_blocked=<span class="kw">True</span>,  <span class="cm"># Hard gate — no coaching</span>
+            action=<span class="st">"FIX_SYSTEM → RE_EVALUATE"</span>
+        )
+    
+    <span class="cm"># GATE 3: Process/KB change within 7 days</span>
+    kb_articles = kb.<span class="fn">get_articles_for_criterion</span>(criterion_id)
+    recent_updates = [a <span class="kw">for</span> a <span class="kw">in</span> kb_articles
+                      <span class="kw">if</span> a.modified > eval_window.start - timedelta(days=<span class="nm">7</span>)]
+    
+    <span class="kw">if</span> n_failing >= <span class="nm">3</span> <span class="kw">and</span> recent_updates:
+        <span class="kw">return</span> <span class="tp">FailureClassification</span>(
+            type=<span class="st">"SYSTEMIC"</span>, root_cause=<span class="st">"PROCESS_CHANGE"</span>,
+            coaching_blocked=<span class="kw">True</span>,
+            action=<span class="st">"VERIFY_COMMUNICATION → RE_EVALUATE"</span>
+        )
+    
+    <span class="cm"># GATE 2 standalone: Wide failure rate</span>
+    <span class="kw">if</span> n_failing >= <span class="nm">3</span> <span class="kw">and</span> failure_rate > <span class="nm">0.25</span>:
+        <span class="kw">return</span> <span class="tp">FailureClassification</span>(
+            type=<span class="st">"SYSTEMIC"</span>, root_cause=<span class="st">"WIDESPREAD_GAP"</span>,
+            coaching_blocked=<span class="kw">True</span>,
+            action=<span class="st">"PROCESS_REVIEW → GROUP_TRAINING"</span>
+        )
+    
+    <span class="cm"># GATE 5: Cohort pattern — chi-squared against base rate</span>
+    cohort = <span class="fn">detect_cohort_pattern</span>(failing_agents)
+    <span class="kw">if</span> cohort.is_significant:
+        <span class="kw">return</span> <span class="tp">FailureClassification</span>(
+            type=<span class="st">"COHORT"</span>,
+            root_cause=cohort.shared_attribute,
+            action=<span class="st">"TARGETED_COHORT_INTERVENTION"</span>
+        )
+    
+    <span class="cm"># All gates passed — confirmed individual gap</span>
+    <span class="kw">return</span> <span class="tp">FailureClassification</span>(
+        type=<span class="st">"INDIVIDUAL"</span>, root_cause=<span class="st">"PERFORMANCE_GAP"</span>,
+        coaching_plan=<span class="fn">build_coaching_plan</span>(failing_agents, criterion_id)
+    )</pre>
+      </div>
+    </div>
+
+    <div class="code-block">
+      <div class="code-header" onclick="toggleCode('code2')">
+        <div class="code-label">cohort_analyzer.py — statistical pattern detection</div>
+        <div class="code-toggle" id="toggle-code2">▼</div>
+      </div>
+      <div class="code-body" id="code2">
+        <pre><span class="kw">def</span> <span class="fn">detect_cohort_pattern</span>(agent_ids: <span class="tp">list</span>[str]) -> <span class="tp">CohortResult</span>:
+    agents = [roster.<span class="fn">get</span>(id) <span class="kw">for</span> id <span class="kw">in</span> agent_ids]
+    
+    dimensions = {
+        <span class="st">"hire_cohort"</span>:  [a.hire_date.<span class="fn">strftime</span>(<span class="st">"%Y-%m"</span>) <span class="kw">for</span> a <span class="kw">in</span> agents],
+        <span class="st">"trainer"</span>:      [a.onboarding_trainer <span class="kw">for</span> a <span class="kw">in</span> agents],
+        <span class="st">"shift"</span>:        [a.primary_shift <span class="kw">for</span> a <span class="kw">in</span> agents],
+        <span class="st">"team_lead"</span>:    [a.team_lead_id <span class="kw">for</span> a <span class="kw">in</span> agents],
+    }
+    
+    <span class="kw">for</span> dim, values <span class="kw">in</span> dimensions.items():
+        most_common, count = Counter(values).<span class="fn">most_common</span>(<span class="nm">1</span>)[<span class="nm">0</span>]
+        concentration = count / <span class="fn">len</span>(values)
+        
+        <span class="cm"># Chi-squared against roster base rate</span>
+        expected = roster.<span class="fn">get_distribution</span>(dim, most_common)
+        chi2, p = <span class="fn">chi_squared_test</span>(count, <span class="fn">len</span>(values), expected)
+        
+        <span class="kw">if</span> concentration >= <span class="nm">0.60</span> <span class="kw">and</span> p < <span class="nm">0.05</span>:
+            <span class="kw">return</span> <span class="tp">CohortResult</span>(
+                is_significant=<span class="kw">True</span>,
+                shared_attribute=dim,
+                concentration=concentration,
+                p_value=p
+            )
+    
+    <span class="kw">return</span> <span class="tp">CohortResult</span>(is_significant=<span class="kw">False</span>)</pre>
+      </div>
+    </div>
+
+    <div class="sl">Technology Stack</div>
+    <div class="tech-row">
+      <span class="tech-tag">Python 3.11</span>
+      <span class="tech-tag">pandas</span>
+      <span class="tech-tag">scipy.stats</span>
+      <span class="tech-tag">chi-squared</span>
+      <span class="tech-tag">FastAPI</span>
+      <span class="tech-tag">PostgreSQL</span>
+      <span class="tech-tag">Genesys QA API</span>
+      <span class="tech-tag">Observe.AI API</span>
+      <span class="tech-tag">n8n</span>
+      <span class="tech-tag">Power BI</span>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══ PANEL 3: ARCHITECTURE DECISIONS ═══ -->
+<div class="panel" id="panel-decisions">
+  <div class="panel-content">
+
+    <div class="sl">Why These Design Decisions</div>
+
+    <div class="insight-row">
+      <div class="insight-card">
+        <div class="ic-label">Why Gate-Based, Not ML</div>
+        <div class="ic-text">ML classifiers need <strong>labeled training data</strong> that doesn't exist — nobody's been tagging systemic vs. individual for years. Gate rules are <strong>explainable, auditable, instantly deployable</strong>. Team leads understand why coaching was blocked. After 12+ months of classification data, we train a model on top.</div>
+      </div>
+      <div class="insight-card">
+        <div class="ic-label">Why Chi-Squared for Cohorts</div>
+        <div class="ic-text">Simple concentration ("4 of 5 from same trainer") creates false positives when that trainer <strong>trained 60% of the floor</strong>. Chi-squared tests whether concentration <strong>exceeds what you'd expect given base rate</strong>. At p &lt; 0.05, 95% confidence the pattern is real.</div>
+      </div>
+      <div class="insight-card">
+        <div class="ic-label">Why coaching_blocked = True</div>
+        <div class="ic-text">The hard part isn't detection — it's <strong>preventing the wrong action</strong>. Without a hard block, supervisors default to individual coaching because it's familiar. The flag <strong>forces the system-fix path</strong>. Not a suggestion; a gate.</div>
+      </div>
+    </div>
+
+    <div class="insight-row">
+      <div class="insight-card">
+        <div class="ic-label">Where This Sits in the Stack</div>
+        <div class="ic-text">This layer sits on top of any automated QA platform — <strong>Observe.AI, Calabrio, NICE Quality Central, CallMiner</strong>. The tool provides scoring. This engine provides <strong>classification intelligence</strong> that makes the scoring actionable.</div>
+      </div>
+      <div class="insight-card">
+        <div class="ic-label">Composite Scoring</div>
+        <div class="ic-text">Weighted formula: <strong>FCR (30%) + CSAT (25%) + AHT efficiency (20%) + Adherence (15%) + QA score (10%)</strong>. Weights are configurable per role. Prevents gaming a single metric while ignoring others.</div>
+      </div>
+      <div class="insight-card">
+        <div class="ic-label">Deming's 85/15 Rule</div>
+        <div class="ic-text">W. Edwards Deming proved <strong>85% of quality problems originate in the system</strong>, not the worker. Manufacturing applied this 70 years ago. Contact centers still default to blaming the individual. This engine applies <strong>Deming's principle to QA at scale</strong>.</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="metrics-strip">
+  <div class="ms-item">
+    <div class="ms-val">100%</div>
+    <div class="ms-label">Monitoring</div>
+  </div>
+  <div class="ms-item">
+    <div class="ms-val">60%</div>
+    <div class="ms-label">Systemic Root Cause</div>
+  </div>
+  <div class="ms-item">
+    <div class="ms-val">-45%</div>
+    <div class="ms-label">Misattributed Coaching</div>
+  </div>
+  <div class="ms-item">
+    <div class="ms-val">93%</div>
+    <div class="ms-label">FCR Achieved</div>
+  </div>
+  <div class="ms-item">
+    <div class="ms-val">90%+</div>
+    <div class="ms-label">CSAT Maintained</div>
+  </div>
+</div>
+
+<script>
+// ── Tab Navigation ──
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById('panel-' + tab.dataset.panel).classList.add('active');
+  });
+});
+
+// ── Scenario Data ──
+const scenarios = [
+  {
+    gates: [
+      { status: 'pass', label: 'NO EVENT' },
+      { status: 'trigger', label: 'TRIGGERED' },
+      { status: 'trigger', label: 'KB UPDATED' },
+      { status: 'pass', label: 'OK' },
+      { status: 'skip', label: '—' }
+    ],
+    triggerGate: 3,
+    result: {
+      classType: 'systemic',
+      classLabel: 'SYSTEMIC — PROCESS CHANGE',
+      title: 'Knowledge base updated without agent notification',
+      detail: 'Gate 3 triggered: the knowledge base article for this criterion was updated 4 days ago. 15 agents citing the old procedure isn\'t 15 individual failures — it\'s one communication failure. The process changed; the agents weren\'t told.',
+      blocked: true,
+      doAction: 'Verify KB update was communicated via team brief and huddle notes. Republish with change summary. Re-evaluate all 15 agents against corrected baseline in 7 days.',
+      dontAction: 'Do NOT generate 15 individual coaching plans. Do NOT flag agents for retraining. The system failed to communicate, not the agents.'
+    }
+  },
+  {
+    gates: [
+      { status: 'trigger', label: 'LATENCY SPIKE' },
+      { status: 'trigger', label: 'ALL AGENTS' },
+      { status: 'pass', label: 'NO CHANGE' },
+      { status: 'pass', label: 'OK' },
+      { status: 'skip', label: '—' }
+    ],
+    triggerGate: 1,
+    result: {
+      classType: 'systemic',
+      classLabel: 'SYSTEMIC — PLATFORM EVENT',
+      title: 'CRM latency spike causing 30-second delays per screen load',
+      detail: 'Gate 1 triggered immediately: system monitoring detected CRM response times 5x normal during the evaluation window. Every agent was affected equally. AHT increase tracks exactly to average additional wait time per transaction.',
+      blocked: true,
+      doAction: 'Escalate CRM latency to platform team. Request incident report. Exclude all evaluations from this window from performance scoring. Re-evaluate after system stabilization.',
+      dontAction: 'Do NOT coach 30+ agents on handle time efficiency. Do NOT adjust AHT targets. The system was slow, not the agents.'
+    }
+  },
+  {
+    gates: [
+      { status: 'pass', label: 'NO EVENT' },
+      { status: 'pass', label: '1 AGENT' },
+      { status: 'pass', label: 'NO CHANGE' },
+      { status: 'pass', label: 'OK' },
+      { status: 'pass', label: 'NO PATTERN' }
+    ],
+    triggerGate: -1,
+    result: {
+      classType: 'individual',
+      classLabel: 'INDIVIDUAL — CONFIRMED PERFORMANCE GAP',
+      title: 'Genuine empathy skill gap — coaching appropriate',
+      detail: 'All five gates passed. No system events. Only 1 agent affected. No process changes. Routing was correct. No cohort pattern. This is a confirmed individual performance gap. Agent scores 62% vs. 88% peer average on empathy consistently across multiple evaluations.',
+      blocked: false,
+      doAction: 'Generate targeted coaching plan: specific call examples showing empathy gap, recommended soft-skills training module, paired shadow sessions with top performer, follow-up eval in 14 days.',
+      dontAction: 'N/A — this IS the right time for individual coaching. All systemic causes have been ruled out by the gate sequence.'
+    }
+  },
+  {
+    gates: [
+      { status: 'pass', label: 'NO EVENT' },
+      { status: 'trigger', label: '5 AGENTS' },
+      { status: 'pass', label: 'NO CHANGE' },
+      { status: 'pass', label: 'OK' },
+      { status: 'trigger', label: 'p = 0.003' }
+    ],
+    triggerGate: 5,
+    result: {
+      classType: 'cohort',
+      classLabel: 'COHORT — ONBOARDING GAP',
+      title: 'Shared trainer and hire month — onboarding deficiency',
+      detail: 'Gate 5 triggered: chi-squared analysis shows all 5 agents were hired Oct 2024 and trained by same onboarder. Concentration = 100%, p = 0.003. This trainer\'s cohort has 3x the documentation failure rate of other cohorts. That\'s not 5 performance problems — it\'s one training gap.',
+      blocked: false,
+      doAction: 'Targeted cohort intervention: review trainer\'s onboarding curriculum for documentation module. Schedule group refresher for Oct 2024 cohort. Audit other criteria for same cohort pattern.',
+      dontAction: 'Do NOT create 5 individual PIPs. The root cause is upstream in the onboarding process, not in individual agent effort.'
+    }
+  },
+  {
+    gates: [
+      { status: 'pass', label: 'NO EVENT' },
+      { status: 'trigger', label: '12 AGENTS' },
+      { status: 'pass', label: 'NO CHANGE' },
+      { status: 'trigger', label: 'SKILL MISMATCH' },
+      { status: 'pass', label: 'NO PATTERN' }
+    ],
+    triggerGate: 4,
+    result: {
+      classType: 'systemic',
+      classLabel: 'SYSTEMIC — ROUTING MISCONFIGURATION',
+      title: 'Complex calls routed to general queue — agents lack specialist access',
+      detail: 'Gate 4 triggered: analysis shows flagged interactions were specialty call types (billing disputes, coverage exceptions) routed to general queue agents who lack the required system permissions and training. Hold time extended because agents were searching for workarounds they shouldn\'t have needed.',
+      blocked: true,
+      doAction: 'Audit ACD routing rules for affected call types. Verify skill assignments match call complexity requirements. Add routing guards for specialty calls. Re-evaluate agents after routing fix.',
+      dontAction: 'Do NOT coach 12 agents on hold-time compliance. They were given calls they weren\'t configured to handle. Coaching compliance without fixing routing will just create frustrated agents.'
+    }
+  },
+  {
+    gates: [
+      { status: 'pass', label: 'NO EVENT' },
+      { status: 'pass', label: '2 AGENTS' },
+      { status: 'pass', label: 'NO CHANGE' },
+      { status: 'pass', label: 'OK' },
+      { status: 'pass', label: 'NO PATTERN' }
+    ],
+    triggerGate: -1,
+    result: {
+      classType: 'individual',
+      classLabel: 'INDIVIDUAL — CONFIRMED PERFORMANCE GAP',
+      title: 'Consistent script adherence failure — coaching appropriate',
+      detail: 'All five gates passed clean. Only 2 agents, no system events, no process changes, correct routing, no cohort correlation. Both agents have failed this criterion across 4+ evaluations each while 96% of peers pass. This is confirmed individual non-compliance.',
+      blocked: false,
+      doAction: 'Generate individual coaching plans with specific eval recordings showing missed elements. Side-by-side comparison with compliant calls. Clear expectations with 7-day follow-up evaluation. Document for potential escalation if pattern continues.',
+      dontAction: 'N/A — all systemic causes ruled out. Individual coaching is the correct intervention.'
+    }
+  }
+];
+
+let selectedScenario = -1;
+let engineRunning = false;
+
+function selectScenario(idx) {
+  if (engineRunning) return;
+  selectedScenario = idx;
+  document.querySelectorAll('.scenario-card').forEach((c, i) => {
+    c.classList.toggle('selected', i === idx);
+  });
+  document.getElementById('run-btn').disabled = false;
+  resetGates();
+}
+
+function resetGates() {
+  for (let i = 1; i <= 5; i++) {
+    const gate = document.getElementById('gate-' + i);
+    gate.className = 'gate';
+    document.getElementById('gs-' + i).textContent = '—';
+    document.getElementById('gs-' + i).className = 'gate-status pending';
+  }
+  document.getElementById('result-waiting').style.display = 'flex';
+  document.getElementById('result-content').className = 'result-content';
+}
+
+function runEngine() {
+  if (selectedScenario < 0 || engineRunning) return;
+  engineRunning = true;
+  document.getElementById('run-btn').disabled = true;
+  resetGates();
+
+  const s = scenarios[selectedScenario];
+  let delay = 0;
+
+  s.gates.forEach((g, i) => {
+    const gateIdx = i + 1;
+
+    // Checking state
+    setTimeout(() => {
+      document.getElementById('gate-' + gateIdx).className = 'gate checking';
+      document.getElementById('gs-' + gateIdx).textContent = 'CHECKING...';
+      document.getElementById('gs-' + gateIdx).className = 'gate-status pending';
+    }, delay);
+
+    delay += 600;
+
+    // Result state
+    setTimeout(() => {
+      const gate = document.getElementById('gate-' + gateIdx);
+      const gs = document.getElementById('gs-' + gateIdx);
+
+      if (g.status === 'trigger') {
+        gate.className = 'gate triggered';
+        gs.textContent = '⚑ ' + g.label;
+        gs.className = 'gate-status trigger';
+      } else if (g.status === 'pass') {
+        gate.className = 'gate passed';
+        gs.textContent = '✓ ' + g.label;
+        gs.className = 'gate-status pass';
+      } else {
+        gate.className = 'gate passed';
+        gs.textContent = g.label;
+        gs.className = 'gate-status fail';
+      }
+    }, delay);
+
+    delay += 300;
+  });
+
+  // Show result
+  setTimeout(() => {
+    const r = s.result;
+    document.getElementById('result-waiting').style.display = 'none';
+
+    let html = `
+      <div class="result-class ${r.classType}">${r.classLabel}</div>
+      <div class="result-title">${r.title}</div>
+      <div class="result-detail">${r.detail}</div>
+    `;
+
+    if (r.blocked) {
+      html += `<div class="coaching-blocked">⊘ coaching_blocked = True</div>`;
+    } else if (r.classType === 'individual') {
+      html += `<div class="coaching-allowed">✓ coaching_plan generated</div>`;
+    }
+
+    html += `
+      <div class="result-action do">
+        <div class="ra-label">✓ Correct Action</div>
+        <div class="ra-text">${r.doAction}</div>
+      </div>
+      <div class="result-action dont">
+        <div class="ra-label">✕ Wrong Action</div>
+        <div class="ra-text">${r.dontAction}</div>
+      </div>
+    `;
+
+    document.getElementById('result-content').innerHTML = html;
+    document.getElementById('result-content').className = 'result-content visible';
+    engineRunning = false;
+    document.getElementById('run-btn').disabled = false;
+  }, delay + 400);
+}
+
+// ── Code Toggle ──
+function toggleCode(id) {
+  document.getElementById(id).classList.toggle('open');
+  document.getElementById('toggle-' + id).classList.toggle('open');
+}
+</script>
+
+</body>
+</html>

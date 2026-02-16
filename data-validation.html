@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Upstream Data Validation — Technical Architecture</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg: #09090b;
+    --surface: #111113;
+    --surface-alt: #18181b;
+    --border: #27272a;
+    --text: #fafafa;
+    --text-secondary: #a1a1aa;
+    --text-muted: #71717a;
+    --accent: #fbbf24;
+    --accent-muted: rgba(251, 191, 36, 0.08);
+    --accent-border: rgba(251, 191, 36, 0.25);
+    --success: #4ade80;
+    --error: #ef4444;
+    --cyan: #22d3ee;
+    --mono: 'JetBrains Mono', monospace;
+    --sans: 'Plus Jakarta Sans', system-ui, sans-serif;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    min-height: 100vh;
+  }
+
+  .header {
+    border-bottom: 1px solid var(--border);
+    padding: 20px 32px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+  }
+
+  .header-label {
+    font-size: 9px; font-weight: 500; letter-spacing: 0.12em;
+    color: var(--accent); text-transform: uppercase; margin-bottom: 4px;
+  }
+
+  .header-title { font-size: 20px; font-weight: 400; }
+
+  .header-metrics { display: flex; gap: 48px; align-items: baseline; }
+
+  .hm-val {
+    font-family: var(--mono); font-size: 28px; font-weight: 600;
+    color: var(--accent); letter-spacing: -0.02em;
+  }
+
+  .hm-label { font-size: 11px; color: var(--text-muted); margin-left: 6px; }
+
+  .context-bar {
+    padding: 14px 32px; border-bottom: 1px solid var(--border);
+    background: var(--surface); font-size: 12px; color: var(--text-secondary);
+    display: flex; justify-content: space-between;
+  }
+
+  .context-bar .hl { color: var(--accent); font-weight: 600; }
+
+  .main {
+    display: grid; grid-template-columns: 1fr 380px;
+    min-height: calc(100vh - 140px);
+  }
+
+  .center { padding: 28px 32px; border-right: 1px solid var(--border); }
+  .right { padding: 24px; background: var(--surface); }
+
+  .sl {
+    font-size: 9px; font-weight: 500; letter-spacing: 0.1em;
+    color: var(--text-muted); text-transform: uppercase; margin-bottom: 14px;
+  }
+
+  /* ── Code Blocks ── */
+  .code-block {
+    background: var(--surface-alt);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 16px 20px;
+    margin-bottom: 20px;
+    overflow-x: auto;
+  }
+
+  .code-block pre {
+    font-family: var(--mono);
+    font-size: 11px;
+    line-height: 1.7;
+    color: var(--text-secondary);
+    white-space: pre;
+    margin: 0;
+  }
+
+  .code-block .comment { color: var(--text-muted); }
+  .code-block .keyword { color: var(--accent); }
+  .code-block .string { color: var(--success); }
+  .code-block .func { color: var(--cyan); }
+  .code-block .num { color: #c084fc; }
+  .code-block .error-text { color: var(--error); }
+
+  .code-label {
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 0.08em;
+    color: var(--accent);
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+
+  /* ── Architecture Flow ── */
+  .arch-flow {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 2px;
+    margin-bottom: 24px;
+  }
+
+  .arch-node {
+    padding: 14px 18px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    display: grid;
+    grid-template-columns: 100px 1fr 120px;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .arch-node.active {
+    border-color: var(--accent-border);
+    background: var(--accent-muted);
+  }
+
+  .arch-step {
+    font-family: var(--mono); font-size: 9px;
+    letter-spacing: 0.08em; color: var(--text-muted);
+  }
+
+  .arch-node.active .arch-step { color: var(--accent); }
+
+  .arch-desc { font-size: 12px; color: var(--text-secondary); line-height: 1.5; }
+
+  .arch-tech {
+    font-family: var(--mono); font-size: 10px;
+    color: var(--text-muted); text-align: right;
+  }
+
+  .arch-connector {
+    text-align: center; padding: 4px 0;
+    font-family: var(--mono); font-size: 10px; color: var(--text-muted);
+  }
+
+  /* ── Schema Table ── */
+  .schema-table {
+    width: 100%; border-collapse: collapse; margin-bottom: 20px;
+  }
+
+  .schema-table th {
+    font-size: 9px; font-weight: 500; letter-spacing: 0.08em;
+    color: var(--text-muted); text-transform: uppercase;
+    padding: 8px 12px; text-align: left;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .schema-table td {
+    padding: 8px 12px; font-size: 11px;
+    color: var(--text-secondary); border-bottom: 1px solid var(--border);
+    vertical-align: top; line-height: 1.5;
+  }
+
+  .schema-table td:first-child {
+    font-family: var(--mono); color: var(--accent); font-weight: 500;
+    white-space: nowrap;
+  }
+
+  .schema-table td:nth-child(2) {
+    font-family: var(--mono); color: var(--text-muted);
+  }
+
+  .type-badge {
+    display: inline-block; padding: 1px 6px; border-radius: 3px;
+    font-family: var(--mono); font-size: 9px;
+  }
+
+  .type-badge.str { background: rgba(74, 222, 128, 0.1); color: var(--success); }
+  .type-badge.bool { background: rgba(251, 191, 36, 0.1); color: var(--accent); }
+  .type-badge.int { background: rgba(192, 132, 252, 0.1); color: #c084fc; }
+  .type-badge.obj { background: rgba(34, 211, 238, 0.1); color: var(--cyan); }
+  .type-badge.arr { background: rgba(251, 113, 133, 0.1); color: #fb7185; }
+
+  /* ── Right Panel ── */
+  .rs { margin-bottom: 26px; }
+
+  .insight-card {
+    padding: 14px; border-left: 3px solid var(--accent);
+    background: var(--surface-alt); border-radius: 0 6px 6px 0;
+    margin-bottom: 14px;
+  }
+
+  .ic-label {
+    font-size: 9px; font-weight: 500; letter-spacing: 0.1em;
+    color: var(--accent); text-transform: uppercase; margin-bottom: 6px;
+  }
+
+  .ic-text {
+    font-size: 11px; color: var(--text-secondary); line-height: 1.6;
+  }
+
+  .ic-text strong { color: var(--text); font-weight: 600; }
+
+  .tech-tag {
+    display: inline-block; padding: 3px 8px;
+    background: var(--surface-alt); border: 1px solid var(--border);
+    border-radius: 4px; font-size: 10px; font-family: var(--mono);
+    color: var(--text-secondary); margin: 0 5px 5px 0;
+  }
+
+  .metric-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 8px 0; border-bottom: 1px solid var(--border);
+  }
+
+  .mr-label { font-size: 11px; color: var(--text-secondary); }
+  .mr-val { font-family: var(--mono); font-size: 13px; font-weight: 600; }
+  .mr-val.accent { color: var(--accent); }
+  .mr-val.positive { color: var(--success); }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <div class="header-label">Technical Architecture — Real-Time Data Validation Pipeline</div>
+    <div class="header-title">Upstream Data Validation Engine</div>
+  </div>
+  <div class="header-metrics">
+    <div>
+      <span class="hm-val">$2M</span>
+      <span class="hm-label">revenue recovered</span>
+    </div>
+    <div>
+      <span class="hm-val">&lt;90s</span>
+      <span class="hm-label">detection latency</span>
+    </div>
+  </div>
+</div>
+
+<div class="context-bar">
+  <div><span class="hl">Architecture:</span> Event-driven validation pipeline intercepting intake data, running eligibility verification, and routing clean/flagged contacts in real-time</div>
+  <div><span class="hl">Stride Care</span> · 70+ agents · PE-backed</div>
+</div>
+
+<div class="main">
+  <div class="center">
+
+    <div class="sl">Pipeline Architecture — Event Sequence</div>
+
+    <div class="arch-flow">
+      <div class="arch-node active">
+        <div class="arch-step">INTERCEPT</div>
+        <div class="arch-desc">Webhook listener captures intake event from CRM/phone system. Extracts payer_id, member_id, group_number, date_of_service fields.</div>
+        <div class="arch-tech">webhook / REST</div>
+      </div>
+      <div class="arch-connector">↓ event payload</div>
+      <div class="arch-node active">
+        <div class="arch-step">VALIDATE</div>
+        <div class="arch-desc">Async eligibility check against payer API (270/271 transaction). Parallel NPI crossmatch + coverage date range validation. 800ms p95 latency.</div>
+        <div class="arch-tech">Python / asyncio</div>
+      </div>
+      <div class="arch-connector">↓ validation result</div>
+      <div class="arch-node">
+        <div class="arch-step">CLASSIFY</div>
+        <div class="arch-desc">Rule engine scores validation result: CLEAN (route), CORRECTABLE (agent assist), BLOCKED (known-bad pattern). Confidence threshold: 0.85.</div>
+        <div class="arch-tech">rules engine</div>
+      </div>
+      <div class="arch-connector">↓ classification + confidence</div>
+      <div class="arch-node">
+        <div class="arch-step">ROUTE</div>
+        <div class="arch-desc">CLEAN → standard queue. CORRECTABLE → agent gets pre-populated correction panel. BLOCKED → automated outbound with correct info request.</div>
+        <div class="arch-tech">CCaaS API</div>
+      </div>
+      <div class="arch-connector">↓ outcome logged</div>
+      <div class="arch-node" style="border-color: rgba(74, 222, 128, 0.2); background: rgba(74, 222, 128, 0.04);">
+        <div class="arch-step" style="color: var(--success);">LEARN</div>
+        <div class="arch-desc">Every validation outcome feeds pattern detection model. Source-level error rates tracked. Anomaly threshold triggers automated partner alert.</div>
+        <div class="arch-tech">pandas / sklearn</div>
+      </div>
+    </div>
+
+    <div class="sl">Eligibility Validation — Core Logic</div>
+
+    <div class="code-block">
+      <div class="code-label">validate_eligibility.py</div>
+      <pre><span class="keyword">async def</span> <span class="func">validate_intake</span>(event: IntakeEvent) -> ValidationResult:
+    <span class="comment"># 1. Extract and normalize payer identifiers</span>
+    payer = <span class="func">normalize_payer_id</span>(event.payer_id, event.source_channel)
+    
+    <span class="comment"># 2. Parallel eligibility + NPI crossmatch</span>
+    elig, npi = <span class="keyword">await</span> asyncio.<span class="func">gather</span>(
+        <span class="func">check_eligibility_270</span>(payer, event.member_id, event.dos),
+        <span class="func">crossmatch_npi</span>(event.provider_npi, payer.network_id)
+    )
+    
+    <span class="comment"># 3. Classification with confidence scoring</span>
+    flags = []
+    <span class="keyword">if not</span> elig.active:
+        flags.append(Flag(<span class="string">"COVERAGE_INACTIVE"</span>, severity=<span class="num">0.95</span>))
+    <span class="keyword">if</span> elig.active <span class="keyword">and not</span> <span class="func">date_in_range</span>(event.dos, elig.eff_date, elig.term_date):
+        flags.append(Flag(<span class="string">"DATE_RANGE_MISMATCH"</span>, severity=<span class="num">0.90</span>))
+    <span class="keyword">if not</span> npi.in_network:
+        flags.append(Flag(<span class="string">"OUT_OF_NETWORK"</span>, severity=<span class="num">0.80</span>))
+    <span class="keyword">if</span> <span class="func">fuzzy_match</span>(event.member_name, elig.member_name) < <span class="num">0.85</span>:
+        flags.append(Flag(<span class="string">"NAME_MISMATCH"</span>, severity=<span class="num">0.70</span>))
+    
+    <span class="comment"># 4. Route decision</span>
+    max_severity = <span class="func">max</span>(f.severity <span class="keyword">for</span> f <span class="keyword">in</span> flags) <span class="keyword">if</span> flags <span class="keyword">else</span> <span class="num">0.0</span>
+    
+    <span class="keyword">if</span> max_severity == <span class="num">0.0</span>:
+        <span class="keyword">return</span> ValidationResult(status=<span class="string">"CLEAN"</span>, route=<span class="string">"standard_queue"</span>)
+    <span class="keyword">elif</span> max_severity < <span class="num">0.85</span>:
+        <span class="keyword">return</span> ValidationResult(
+            status=<span class="string">"CORRECTABLE"</span>,
+            route=<span class="string">"agent_assist"</span>,
+            corrections=<span class="func">generate_suggestions</span>(flags, elig)
+        )
+    <span class="keyword">else</span>:
+        <span class="keyword">return</span> ValidationResult(
+            status=<span class="string">"BLOCKED"</span>,
+            route=<span class="string">"outbound_correction"</span>,
+            flags=flags
+        )</pre>
+    </div>
+
+    <div class="sl">Anomaly Detection — Source-Level Pattern Monitoring</div>
+
+    <div class="code-block">
+      <div class="code-label">anomaly_detector.py</div>
+      <pre><span class="keyword">def</span> <span class="func">detect_source_anomaly</span>(source_id: str, window_hours: <span class="keyword">int</span> = <span class="num">24</span>) -> Alert | None:
+    <span class="comment"># Pull validation outcomes for this data source</span>
+    outcomes = db.<span class="func">query</span>(
+        <span class="string">"""SELECT status, COUNT(*) as cnt 
+           FROM validations 
+           WHERE source_id = %s AND created_at > NOW() - INTERVAL %s HOUR
+           GROUP BY status"""</span>,
+        (source_id, window_hours)
+    )
+    
+    total = <span class="func">sum</span>(o.cnt <span class="keyword">for</span> o <span class="keyword">in</span> outcomes)
+    flagged = <span class="func">sum</span>(o.cnt <span class="keyword">for</span> o <span class="keyword">in</span> outcomes <span class="keyword">if</span> o.status != <span class="string">"CLEAN"</span>)
+    error_rate = flagged / total <span class="keyword">if</span> total > <span class="num">0</span> <span class="keyword">else</span> <span class="num">0.0</span>
+    
+    <span class="comment"># Compare against 30-day rolling baseline for this source</span>
+    baseline = <span class="func">get_baseline_error_rate</span>(source_id, days=<span class="num">30</span>)
+    z_score = (error_rate - baseline.mean) / baseline.std_dev
+    
+    <span class="keyword">if</span> z_score > <span class="num">2.5</span>:  <span class="comment"># &gt;2.5σ deviation triggers alert</span>
+        <span class="keyword">return</span> Alert(
+            level=<span class="string">"CRITICAL"</span>,
+            source=source_id,
+            current_rate=error_rate,
+            baseline_rate=baseline.mean,
+            deviation=z_score,
+            <span class="comment"># Auto-generate partner notification</span>
+            action=<span class="func">build_partner_alert</span>(source_id, error_rate, baseline)
+        )</pre>
+    </div>
+
+    <div class="sl">Validation Event Schema</div>
+
+    <table class="schema-table">
+      <thead>
+        <tr><th>Field</th><th>Type</th><th>Description</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>event_id</td>
+          <td><span class="type-badge str">uuid</span></td>
+          <td>Unique intake event identifier</td>
+        </tr>
+        <tr>
+          <td>payer_id</td>
+          <td><span class="type-badge str">string</span></td>
+          <td>Normalized payer identifier (maps source variations to canonical ID)</td>
+        </tr>
+        <tr>
+          <td>eligibility_response</td>
+          <td><span class="type-badge obj">object</span></td>
+          <td>Raw 271 response — active status, effective/term dates, plan details</td>
+        </tr>
+        <tr>
+          <td>flags[]</td>
+          <td><span class="type-badge arr">array</span></td>
+          <td>Validation flags with severity scores (0.0–1.0)</td>
+        </tr>
+        <tr>
+          <td>classification</td>
+          <td><span class="type-badge str">enum</span></td>
+          <td>CLEAN | CORRECTABLE | BLOCKED</td>
+        </tr>
+        <tr>
+          <td>confidence</td>
+          <td><span class="type-badge int">float</span></td>
+          <td>Classification confidence score, threshold 0.85</td>
+        </tr>
+        <tr>
+          <td>corrections[]</td>
+          <td><span class="type-badge arr">array</span></td>
+          <td>Suggested corrections for agent-assist routing (nullable)</td>
+        </tr>
+        <tr>
+          <td>source_channel</td>
+          <td><span class="type-badge str">string</span></td>
+          <td>Intake origin — phone, web, partner_feed, batch_import</td>
+        </tr>
+        <tr>
+          <td>latency_ms</td>
+          <td><span class="type-badge int">int</span></td>
+          <td>End-to-end validation time. Target: p95 &lt; 800ms</td>
+        </tr>
+      </tbody>
+    </table>
+
+  </div>
+
+  <div class="right">
+
+    <div class="rs">
+      <div class="sl">Architecture Decisions</div>
+      <div class="insight-card">
+        <div class="ic-label">Why Async Parallel</div>
+        <div class="ic-text">
+          Eligibility 270/271 calls average <strong>400–600ms</strong>. NPI crossmatch adds another 200ms. Running sequentially puts us over 800ms. <strong>asyncio.gather()</strong> parallelizes both — keeping total latency under threshold while doubling the validation coverage per event.
+        </div>
+      </div>
+      <div class="insight-card">
+        <div class="ic-label">Why Z-Score Over Fixed Threshold</div>
+        <div class="ic-text">
+          Fixed error thresholds don't account for source variance. A <strong>partner with baseline 8% error rate</strong> spiking to 15% is a crisis. A partner with 2% baseline hitting 3% might be noise. Z-score against <strong>per-source rolling baseline</strong> catches real anomalies regardless of normal variance.
+        </div>
+      </div>
+      <div class="insight-card">
+        <div class="ic-label">Why 0.85 Confidence Threshold</div>
+        <div class="ic-text">
+          Tuned empirically over 90 days. At 0.80, <strong>false positive rate was 12%</strong> — agents saw correction prompts that weren't needed, creating alert fatigue. At 0.90, we missed <strong>8% of correctable cases</strong>. 0.85 hit the sweet spot: 3.2% false positive, 2.1% false negative.
+        </div>
+      </div>
+    </div>
+
+    <div class="rs">
+      <div class="sl">Tech Stack</div>
+      <div style="margin-top: 4px;">
+        <span class="tech-tag">Python 3.11</span>
+        <span class="tech-tag">asyncio</span>
+        <span class="tech-tag">FastAPI</span>
+        <span class="tech-tag">X12 270/271</span>
+        <span class="tech-tag">PostgreSQL</span>
+        <span class="tech-tag">Redis (cache)</span>
+        <span class="tech-tag">scikit-learn</span>
+        <span class="tech-tag">pandas</span>
+        <span class="tech-tag">n8n (orchestration)</span>
+        <span class="tech-tag">Webhooks</span>
+        <span class="tech-tag">CCaaS API</span>
+        <span class="tech-tag">Power BI</span>
+      </div>
+    </div>
+
+    <div class="rs">
+      <div class="sl">Performance Benchmarks</div>
+      <div class="metric-row">
+        <div class="mr-label">Validation latency (p95)</div>
+        <div class="mr-val accent">780ms</div>
+      </div>
+      <div class="metric-row">
+        <div class="mr-label">False positive rate</div>
+        <div class="mr-val accent">3.2%</div>
+      </div>
+      <div class="metric-row">
+        <div class="mr-label">False negative rate</div>
+        <div class="mr-val accent">2.1%</div>
+      </div>
+      <div class="metric-row">
+        <div class="mr-label">Anomaly detection (z &gt; 2.5σ)</div>
+        <div class="mr-val positive">&lt;15 min</div>
+      </div>
+      <div class="metric-row">
+        <div class="mr-label">Self-resolution rate (CORRECTABLE)</div>
+        <div class="mr-val positive">40%</div>
+      </div>
+      <div class="metric-row">
+        <div class="mr-label">Denial rate reduction</div>
+        <div class="mr-val positive">-30%</div>
+      </div>
+      <div class="metric-row">
+        <div class="mr-label">Revenue recovered (annual)</div>
+        <div class="mr-val accent">$2M</div>
+      </div>
+    </div>
+
+    <div class="rs">
+      <div class="sl">Applicability Note</div>
+      <div class="ic-text" style="font-size: 11px; color: var(--text-muted); line-height: 1.6;">
+        This architecture applies to any operation where <strong style="color: var(--text-secondary);">third-party data quality drives downstream failure</strong>. Replace eligibility APIs with carrier data feeds, payer IDs with VIN/policy lookups — the validation pipeline, classification logic, and anomaly detection layer are domain-agnostic.
+      </div>
+    </div>
+
+  </div>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,866 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Pete Connor — Operations Intelligence Architecture</title>
+<meta name="description" content="Interactive technical portfolio: Unified Operations Intelligence and Systemic-First Quality Intelligence architectures.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚡</text></svg>">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+  *{margin:0;padding:0;box-sizing:border-box}
+
+  :root{
+    --bg:#09090b;--surface:#111113;--surface-alt:#18181b;
+    --border:#27272a;--border-hover:#3f3f46;
+    --text:#fafafa;--text-secondary:#a1a1aa;--text-muted:#71717a;
+    --cyan:#22d3ee;--cyan-muted:rgba(34,211,238,0.08);--cyan-border:rgba(34,211,238,0.25);
+    --rose:#fb7185;--rose-muted:rgba(251,113,133,0.08);--rose-border:rgba(251,113,133,0.25);
+    --success:#4ade80;--error:#ef4444;--warning:#fbbf24;--purple:#c084fc;
+    --mono:'JetBrains Mono',monospace;--sans:'Plus Jakarta Sans',system-ui,sans-serif;
+  }
+
+  body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:100vh;-webkit-tap-highlight-color:transparent}
+
+  /* ── GLOBAL NAV ── */
+  .global-nav{
+    position:fixed;top:0;left:0;right:0;z-index:100;
+    background:rgba(9,9,11,0.92);backdrop-filter:blur(12px);
+    border-bottom:1px solid var(--border);
+    padding:0 32px;display:flex;justify-content:space-between;align-items:center;height:52px;
+  }
+  .nav-brand{display:flex;align-items:center;gap:12px}
+  .nav-brand-mark{
+    font-family:var(--mono);font-size:11px;font-weight:600;
+    color:var(--cyan);letter-spacing:0.08em;
+  }
+  .nav-brand-sep{color:var(--border);font-size:14px}
+  .nav-brand-title{font-size:12px;color:var(--text-muted);font-weight:400}
+  .nav-links{display:flex;gap:0}
+  .nav-link{
+    padding:16px 20px;font-size:11px;font-weight:500;
+    letter-spacing:0.05em;color:var(--text-muted);
+    cursor:pointer;border-bottom:2px solid transparent;
+    transition:all 0.2s;text-transform:uppercase;user-select:none;
+    text-decoration:none;
+  }
+  .nav-link:hover{color:var(--text-secondary)}
+  .nav-link.active-cyan{color:var(--cyan);border-bottom-color:var(--cyan)}
+  .nav-link.active-rose{color:var(--rose);border-bottom-color:var(--rose)}
+
+  .page{display:none;padding-top:52px;min-height:100vh}
+  .page.active{display:block}
+
+  /* ── PAGE HEADER ── */
+  .page-header{
+    border-bottom:1px solid var(--border);padding:20px 32px;
+    display:flex;justify-content:space-between;align-items:flex-end;
+  }
+  .ph-label{
+    font-size:9px;font-weight:500;letter-spacing:0.12em;
+    text-transform:uppercase;margin-bottom:4px;
+  }
+  .ph-title{font-size:20px;font-weight:400}
+  .ph-metrics{display:flex;gap:40px;align-items:baseline}
+  .ph-val{font-family:var(--mono);font-size:26px;font-weight:600;letter-spacing:-0.02em}
+  .ph-unit{font-size:11px;color:var(--text-muted);margin-left:6px}
+
+  /* ── SUB-TABS ── */
+  .sub-tabs{
+    display:flex;border-bottom:1px solid var(--border);
+    background:var(--surface);padding:0 32px;
+  }
+  .sub-tab{
+    padding:12px 24px;font-size:11px;font-weight:500;
+    letter-spacing:0.05em;color:var(--text-muted);
+    cursor:pointer;border-bottom:2px solid transparent;
+    transition:all 0.2s;text-transform:uppercase;user-select:none;
+  }
+  .sub-tab:hover{color:var(--text-secondary)}
+
+  .sub-panel{display:none}
+  .sub-panel.active{display:block}
+
+  .panel-content{padding:28px 32px;max-width:1400px}
+
+  .sl{
+    font-size:9px;font-weight:500;letter-spacing:0.1em;
+    color:var(--text-muted);text-transform:uppercase;margin-bottom:16px;
+  }
+
+  /* ═════ PIECE 2 STYLES (CYAN) ═════ */
+
+  .p2 .sub-tab.active{color:var(--cyan);border-bottom-color:var(--cyan)}
+
+  .platform-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:32px}
+  .platform-card{
+    background:var(--surface);border:1px solid var(--border);border-radius:8px;
+    padding:20px;cursor:pointer;transition:all 0.25s;position:relative;overflow:hidden;
+  }
+  .platform-card::after{
+    content:'';position:absolute;bottom:0;left:0;right:0;height:2px;
+    background:var(--cyan);transform:scaleX(0);transition:transform 0.3s;
+  }
+  .platform-card:hover{border-color:var(--border-hover)}
+  .platform-card.selected{border-color:var(--cyan-border);background:var(--cyan-muted)}
+  .platform-card.selected::after{transform:scaleX(1)}
+  .pc-icon{
+    width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;
+    font-family:var(--mono);font-size:14px;font-weight:600;margin-bottom:14px;
+  }
+  .pc-name{font-size:15px;font-weight:600;margin-bottom:4px}
+  .pc-role{font-size:11px;color:var(--text-muted);margin-bottom:12px}
+  .pc-stats{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .pc-stat-label{font-size:9px;color:var(--text-muted);letter-spacing:0.05em;text-transform:uppercase}
+  .pc-stat-val{font-family:var(--mono);font-size:14px;font-weight:600;color:var(--cyan)}
+
+  .endpoint-drawer{
+    background:var(--surface);border:1px solid var(--border);border-radius:8px;
+    margin-bottom:32px;overflow:hidden;max-height:0;opacity:0;
+    transition:max-height 0.4s ease,opacity 0.3s ease;
+  }
+  .endpoint-drawer.open{max-height:800px;opacity:1}
+  .drawer-header{
+    padding:16px 24px;border-bottom:1px solid var(--border);
+    display:flex;justify-content:space-between;align-items:center;
+  }
+  .drawer-title{font-size:13px;font-weight:600}
+  .drawer-close{
+    font-size:18px;color:var(--text-muted);cursor:pointer;
+    padding:4px 8px;border-radius:4px;transition:color 0.2s;line-height:1;
+  }
+  .drawer-close:hover{color:var(--text)}
+  .drawer-body{padding:20px 24px}
+  .endpoint-row{
+    display:grid;grid-template-columns:1fr 80px 80px;gap:12px;
+    padding:10px 0;border-bottom:1px solid var(--border);align-items:center;
+  }
+  .endpoint-row:last-child{border-bottom:none}
+  .ep-path{font-family:var(--mono);font-size:11px;color:var(--text-secondary);word-break:break-all}
+  .ep-method{
+    font-family:var(--mono);font-size:9px;text-align:center;
+    padding:3px 8px;border-radius:3px;font-weight:600;
+  }
+  .ep-method.get{background:rgba(74,222,128,0.1);color:var(--success)}
+  .ep-method.post{background:rgba(34,211,238,0.1);color:var(--cyan)}
+  .ep-method.webhook{background:rgba(251,191,36,0.1);color:var(--warning)}
+  .ep-freq{font-family:var(--mono);font-size:10px;color:var(--text-muted);text-align:right}
+
+  /* Flow Viz */
+  .flow-viz{
+    background:var(--surface);border:1px solid var(--border);border-radius:8px;
+    padding:32px;margin-bottom:32px;position:relative;min-height:140px;
+  }
+  .flow-nodes{display:flex;justify-content:space-between;align-items:center;position:relative}
+  .flow-node{width:140px;padding:16px;border-radius:8px;text-align:center;position:relative;z-index:2}
+  .flow-node.source{background:var(--surface-alt);border:1px solid var(--border)}
+  .flow-node.middleware{background:var(--cyan-muted);border:1px solid var(--cyan-border);width:180px}
+  .flow-node.output{background:rgba(74,222,128,0.06);border:1px solid rgba(74,222,128,0.2)}
+  .fn-label{font-size:9px;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;margin-bottom:6px}
+  .flow-node.source .fn-label{color:var(--text-muted)}
+  .flow-node.middleware .fn-label{color:var(--cyan)}
+  .flow-node.output .fn-label{color:var(--success)}
+  .fn-name{font-size:13px;font-weight:600}
+  .fn-detail{font-size:10px;color:var(--text-muted);margin-top:4px}
+  .flow-pulse{
+    position:absolute;top:50%;transform:translateY(-50%);
+    width:8px;height:8px;background:var(--cyan);border-radius:50%;
+    z-index:3;opacity:0;box-shadow:0 0 12px rgba(34,211,238,0.3);
+  }
+  .flow-pulse.animating{animation:flowPulse 2.5s ease-in-out infinite}
+  .flow-pulse:nth-child(2){animation-delay:0.8s}
+  .flow-pulse:nth-child(3){animation-delay:1.6s}
+  @keyframes flowPulse{
+    0%{opacity:0;left:16%}10%{opacity:1}45%{opacity:1;left:47%}
+    55%{opacity:1;left:53%}90%{opacity:1}100%{opacity:0;left:84%}
+  }
+
+  /* Sim Controls */
+  .sim-grid{display:grid;grid-template-columns:1fr 400px;gap:24px;margin-bottom:24px}
+  .sim-controls,.sim-result{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:24px}
+  .sim-result{display:flex;flex-direction:column;justify-content:center}
+  .sim-slider-group{margin-bottom:20px}
+  .sim-slider-label{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+  .sim-slider-name{font-size:12px;color:var(--text-secondary)}
+  .sim-slider-val{font-family:var(--mono);font-size:13px;font-weight:600;color:var(--cyan);min-width:60px;text-align:right}
+  .sim-slider{
+    width:100%;-webkit-appearance:none;appearance:none;
+    height:4px;background:var(--border);border-radius:2px;outline:none;
+  }
+  .sim-slider::-webkit-slider-thumb{
+    -webkit-appearance:none;width:16px;height:16px;
+    background:var(--cyan);border-radius:50%;cursor:pointer;
+    box-shadow:0 0 8px rgba(34,211,238,0.3);
+  }
+  .sim-classification{
+    font-family:var(--mono);font-size:11px;letter-spacing:0.08em;
+    text-transform:uppercase;padding:4px 12px;border-radius:4px;
+    display:inline-block;margin-bottom:16px;width:fit-content;
+    font-weight:600;transition:all 0.3s;
+  }
+  .sim-classification.systemic{background:rgba(251,191,36,0.12);color:var(--warning);border:1px solid rgba(251,191,36,0.3)}
+  .sim-classification.staffing{background:rgba(251,113,133,0.12);color:var(--rose);border:1px solid rgba(251,113,133,0.3)}
+  .sim-classification.capacity{background:rgba(239,68,68,0.12);color:var(--error);border:1px solid rgba(239,68,68,0.3)}
+  .sim-classification.normal{background:rgba(74,222,128,0.12);color:var(--success);border:1px solid rgba(74,222,128,0.3)}
+  .sim-diagnosis{font-size:15px;font-weight:600;margin-bottom:8px}
+  .sim-explanation{font-size:12px;color:var(--text-secondary);line-height:1.6}
+  .sim-signals{margin-top:16px;padding-top:16px;border-top:1px solid var(--border)}
+  .sim-signal-row{display:flex;justify-content:space-between;padding:6px 0}
+  .sim-signal-name{font-size:11px;color:var(--text-muted)}
+  .sim-signal-status{font-family:var(--mono);font-size:11px;font-weight:600}
+  .sim-signal-status.up{color:var(--error)}
+  .sim-signal-status.down{color:var(--warning)}
+  .sim-signal-status.ok{color:var(--success)}
+
+  /* ═════ PIECE 3 STYLES (ROSE) ═════ */
+
+  .p3 .sub-tab.active{color:var(--rose);border-bottom-color:var(--rose)}
+
+  .scenario-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:24px}
+  .scenario-card{
+    background:var(--surface);border:1px solid var(--border);border-radius:8px;
+    padding:20px;cursor:pointer;transition:all 0.25s;
+  }
+  .scenario-card:hover{border-color:var(--border-hover)}
+  .scenario-card.selected{border-color:var(--rose-border);background:var(--rose-muted)}
+  .sc-symptom{font-size:14px;font-weight:600;margin-bottom:6px}
+  .sc-detail{font-size:12px;color:var(--text-secondary);line-height:1.5;margin-bottom:10px}
+  .sc-data{display:flex;gap:16px;font-family:var(--mono);font-size:10px;color:var(--text-muted)}
+  .sc-data span{display:flex;align-items:center;gap:4px}
+
+  .engine-display{display:grid;grid-template-columns:1fr 380px;gap:24px;margin-bottom:24px}
+  .gate-sequence{background:var(--surface);border:1px solid var(--border);border-radius:8px;overflow:hidden}
+  .gate{
+    padding:16px 24px;border-bottom:1px solid var(--border);
+    display:grid;grid-template-columns:80px 1fr 100px;align-items:center;gap:16px;
+    transition:all 0.4s;opacity:0.35;
+  }
+  .gate:last-child{border-bottom:none}
+  .gate.checking{opacity:1;background:rgba(34,211,238,0.04)}
+  .gate.passed{opacity:0.6}
+  .gate.triggered{opacity:1;background:var(--rose-muted)}
+  .gate-id{font-family:var(--mono);font-size:10px;letter-spacing:0.08em;color:var(--text-muted)}
+  .gate.triggered .gate-id{color:var(--rose)}
+  .gate.checking .gate-id{color:var(--cyan)}
+  .gate-name{font-size:13px;font-weight:500}
+  .gate-desc{font-size:11px;color:var(--text-secondary);margin-top:2px}
+  .gate-status{font-family:var(--mono);font-size:10px;text-align:right;font-weight:600;letter-spacing:0.05em}
+  .gate-status.pending{color:var(--text-muted)}
+  .gate-status.pass{color:var(--success)}
+  .gate-status.trigger{color:var(--rose)}
+
+  .result-panel{
+    background:var(--surface);border:1px solid var(--border);border-radius:8px;
+    padding:24px;display:flex;flex-direction:column;min-height:420px;
+  }
+  .result-waiting{
+    flex:1;display:flex;align-items:center;justify-content:center;
+    text-align:center;color:var(--text-muted);font-size:13px;
+  }
+  .result-content{display:none}
+  .result-content.visible{display:block}
+  .result-class{
+    font-family:var(--mono);font-size:11px;letter-spacing:0.08em;
+    text-transform:uppercase;padding:5px 14px;border-radius:4px;
+    display:inline-block;margin-bottom:16px;font-weight:600;
+  }
+  .result-class.systemic{background:rgba(251,191,36,0.12);color:var(--warning);border:1px solid rgba(251,191,36,0.3)}
+  .result-class.cohort{background:var(--rose-muted);color:var(--rose);border:1px solid var(--rose-border)}
+  .result-class.individual{background:rgba(74,222,128,0.12);color:var(--success);border:1px solid rgba(74,222,128,0.3)}
+  .result-title{font-size:16px;font-weight:600;margin-bottom:8px}
+  .result-detail{font-size:12px;color:var(--text-secondary);line-height:1.7;margin-bottom:20px}
+  .result-action{padding:14px;border-radius:6px;margin-bottom:12px}
+  .result-action.do{border-left:3px solid var(--success);background:rgba(74,222,128,0.04)}
+  .result-action.dont{border-left:3px solid var(--error);background:rgba(239,68,68,0.04)}
+  .ra-label{font-size:9px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;margin-bottom:4px}
+  .result-action.do .ra-label{color:var(--success)}
+  .result-action.dont .ra-label{color:var(--error)}
+  .ra-text{font-size:12px;color:var(--text-secondary);line-height:1.5}
+  .coaching-blocked{
+    font-family:var(--mono);font-size:11px;color:var(--error);
+    background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);
+    padding:10px 14px;border-radius:6px;margin-bottom:12px;text-align:center;
+    font-weight:600;letter-spacing:0.05em;
+  }
+  .coaching-allowed{
+    font-family:var(--mono);font-size:11px;color:var(--success);
+    background:rgba(74,222,128,0.08);border:1px solid rgba(74,222,128,0.2);
+    padding:10px 14px;border-radius:6px;margin-bottom:12px;text-align:center;
+    font-weight:600;letter-spacing:0.05em;
+  }
+
+  .run-btn{
+    display:inline-flex;align-items:center;gap:8px;padding:10px 24px;
+    background:var(--rose-muted);border:1px solid var(--rose-border);
+    border-radius:6px;color:var(--rose);font-family:var(--mono);
+    font-size:11px;font-weight:600;letter-spacing:0.05em;cursor:pointer;
+    transition:all 0.2s;text-transform:uppercase;margin-bottom:24px;
+  }
+  .run-btn:hover{background:rgba(251,113,133,0.15);border-color:var(--rose)}
+  .run-btn:disabled{opacity:0.4;cursor:default}
+
+  /* ═════ SHARED ═════ */
+  .code-block{background:var(--surface-alt);border:1px solid var(--border);border-radius:6px;overflow:hidden;margin-bottom:20px}
+  .code-header{
+    padding:10px 20px;border-bottom:1px solid var(--border);
+    display:flex;justify-content:space-between;align-items:center;
+    cursor:pointer;transition:background 0.2s;
+  }
+  .code-header:hover{background:rgba(255,255,255,0.02)}
+  .code-label{font-family:var(--mono);font-size:10px;letter-spacing:0.06em;text-transform:uppercase}
+  .p2 .code-label{color:var(--cyan)}
+  .p3 .code-label{color:var(--rose)}
+  .code-toggle{font-size:11px;color:var(--text-muted);transition:transform 0.3s}
+  .code-toggle.open{transform:rotate(180deg)}
+  .code-body{padding:0 20px;max-height:0;overflow:hidden;transition:max-height 0.4s,padding 0.3s}
+  .code-body.open{max-height:800px;padding:16px 20px}
+  .code-body pre{font-family:var(--mono);font-size:11px;line-height:1.7;color:var(--text-secondary);white-space:pre;margin:0}
+  .cm{color:var(--text-muted)}.kw{color:var(--cyan)}.st{color:var(--success)}
+  .fn{color:var(--warning)}.nm{color:var(--purple)}.tp{color:var(--rose)}
+  .p3 .kw{color:var(--rose)}
+
+  .insight-row{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:24px}
+  .insight-card{padding:18px;border-left:3px solid var(--cyan);background:var(--surface);border-radius:0 8px 8px 0}
+  .p3 .insight-card{border-left-color:var(--rose)}
+  .ic-label{font-size:9px;font-weight:500;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:8px}
+  .p2 .ic-label{color:var(--cyan)}
+  .p3 .ic-label{color:var(--rose)}
+  .ic-text{font-size:12px;color:var(--text-secondary);line-height:1.6}
+  .ic-text strong{color:var(--text);font-weight:600}
+
+  .tech-row{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:24px}
+  .tech-tag{
+    padding:4px 10px;background:var(--surface);border:1px solid var(--border);
+    border-radius:4px;font-size:10px;font-family:var(--mono);color:var(--text-secondary);
+  }
+
+  .metrics-strip{
+    display:grid;grid-template-columns:repeat(5,1fr);gap:16px;
+    padding:20px 32px;border-top:1px solid var(--border);background:var(--surface);
+  }
+  .ms-item{text-align:center}
+  .ms-val{font-family:var(--mono);font-size:20px;font-weight:600;letter-spacing:-0.02em}
+  .p2 .ms-val{color:var(--cyan)}
+  .p3 .ms-val{color:var(--rose)}
+  .ms-label{font-size:9px;color:var(--text-muted);letter-spacing:0.06em;text-transform:uppercase;margin-top:4px}
+
+  @media(max-width:1024px){
+    .platform-grid{grid-template-columns:1fr}
+    .sim-grid,.engine-display{grid-template-columns:1fr}
+    .insight-row{grid-template-columns:1fr}
+    .scenario-grid{grid-template-columns:1fr}
+    .metrics-strip{grid-template-columns:repeat(3,1fr)}
+  }
+</style>
+</head>
+<body>
+
+<!-- ═══ GLOBAL NAV ═══ -->
+<nav class="global-nav">
+  <div class="nav-brand">
+    <span class="nav-brand-mark">PC</span>
+    <span class="nav-brand-sep">|</span>
+    <span class="nav-brand-title">Operations Intelligence Architecture</span>
+  </div>
+  <div class="nav-links">
+    <a class="nav-link active-cyan" onclick="showPage('p2')">Unified Intelligence</a>
+    <a class="nav-link" onclick="showPage('p3')">Quality Intelligence</a>
+  </div>
+</nav>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- ═══ PAGE 2: UNIFIED OPERATIONS (CYAN) ═══ -->
+<!-- ═══════════════════════════════════════════ -->
+<div class="page p2 active" id="page-p2">
+
+  <div class="page-header">
+    <div>
+      <div class="ph-label" style="color:var(--cyan)">Technical Architecture — Multi-Platform Integration</div>
+      <div class="ph-title">Unified Operations Intelligence Engine</div>
+    </div>
+    <div class="ph-metrics">
+      <div><span class="ph-val" style="color:var(--cyan)">3→1</span><span class="ph-unit">platforms unified</span></div>
+      <div><span class="ph-val" style="color:var(--cyan)">$1M+</span><span class="ph-unit">annual savings</span></div>
+      <div><span class="ph-val" style="color:var(--cyan)">&lt;15min</span><span class="ph-unit">anomaly detection</span></div>
+    </div>
+  </div>
+
+  <div class="sub-tabs">
+    <div class="sub-tab active" onclick="showSubTab('p2','connectors')">Connector Map</div>
+    <div class="sub-tab" onclick="showSubTab('p2','arch')">MCP Architecture</div>
+    <div class="sub-tab" onclick="showSubTab('p2','anomaly')">Anomaly Simulator</div>
+  </div>
+
+  <!-- Tab 1: Connectors -->
+  <div class="sub-panel active" id="p2-connectors">
+    <div class="panel-content">
+      <div class="sl">Click a platform to inspect API endpoints and extraction patterns</div>
+      <div class="platform-grid">
+        <div class="platform-card" onclick="selectPlatform('genesys')">
+          <div class="pc-icon" style="background:rgba(34,211,238,0.1);color:var(--cyan)">GC</div>
+          <div class="pc-name">Genesys Cloud</div>
+          <div class="pc-role">CCaaS — Call routing, queue metrics, QA evaluations</div>
+          <div class="pc-stats">
+            <div><div class="pc-stat-label">Endpoints</div><div class="pc-stat-val">4</div></div>
+            <div><div class="pc-stat-label">Fastest Poll</div><div class="pc-stat-val">5 min</div></div>
+            <div><div class="pc-stat-label">Auth</div><div class="pc-stat-val">OAuth2</div></div>
+            <div><div class="pc-stat-label">Rate Limit</div><div class="pc-stat-val">300/min</div></div>
+          </div>
+        </div>
+        <div class="platform-card" onclick="selectPlatform('ukg')">
+          <div class="pc-icon" style="background:rgba(192,132,252,0.1);color:var(--purple)">UK</div>
+          <div class="pc-name">UKG</div>
+          <div class="pc-role">WFM — Schedules, adherence, timecards, labor costs</div>
+          <div class="pc-stats">
+            <div><div class="pc-stat-label">Endpoints</div><div class="pc-stat-val">3</div></div>
+            <div><div class="pc-stat-label">Fastest Poll</div><div class="pc-stat-val">daily</div></div>
+            <div><div class="pc-stat-label">Auth</div><div class="pc-stat-val">API Key</div></div>
+            <div><div class="pc-stat-label">Rate Limit</div><div class="pc-stat-val">60/min</div></div>
+          </div>
+        </div>
+        <div class="platform-card" onclick="selectPlatform('helpdesk')">
+          <div class="pc-icon" style="background:rgba(251,191,36,0.1);color:var(--warning)">HD</div>
+          <div class="pc-name">Helpdesk</div>
+          <div class="pc-role">Tickets — Escalations, categories, resolution tracking</div>
+          <div class="pc-stats">
+            <div><div class="pc-stat-label">Endpoints</div><div class="pc-stat-val">2</div></div>
+            <div><div class="pc-stat-label">Fastest Poll</div><div class="pc-stat-val">real-time</div></div>
+            <div><div class="pc-stat-label">Auth</div><div class="pc-stat-val">Bearer</div></div>
+            <div><div class="pc-stat-label">Rate Limit</div><div class="pc-stat-val">120/min</div></div>
+          </div>
+        </div>
+      </div>
+      <div class="endpoint-drawer" id="endpoint-drawer">
+        <div class="drawer-header">
+          <div class="drawer-title" id="drawer-title"></div>
+          <div class="drawer-close" onclick="closePlatform()">✕</div>
+        </div>
+        <div class="drawer-body" id="drawer-body"></div>
+      </div>
+      <div class="sl">Data Flow — Sources → Intelligence Layer → Outputs</div>
+      <div class="flow-viz">
+        <div class="flow-pulse animating"></div>
+        <div class="flow-pulse animating"></div>
+        <div class="flow-pulse animating"></div>
+        <div class="flow-nodes">
+          <div class="flow-node source"><div class="fn-label">Sources</div><div class="fn-name">3 Platforms</div><div class="fn-detail">9 API endpoints</div></div>
+          <div style="flex:1;text-align:center;color:var(--text-muted);font-family:var(--mono);font-size:11px">extract → normalize → correlate</div>
+          <div class="flow-node middleware"><div class="fn-label">MCP Server</div><div class="fn-name">Intelligence Layer</div><div class="fn-detail">Agent ID resolution &lt;2ms</div></div>
+          <div style="flex:0.5;text-align:center;color:var(--text-muted);font-family:var(--mono);font-size:11px">→</div>
+          <div class="flow-node output"><div class="fn-label">Outputs</div><div class="fn-name">18 Reports</div><div class="fn-detail">DPR, scorecard, cost, QA</div></div>
+        </div>
+      </div>
+      <div class="insight-row">
+        <div class="insight-card"><div class="ic-label">Why MCP Abstraction</div><div class="ic-text">Direct API wrappers create <strong>N×M complexity</strong>. MCP lets consumers describe what they need — the server handles extraction. Add a platform? One connector, zero consumer changes.</div></div>
+        <div class="insight-card"><div class="ic-label">Agent ID Resolution</div><div class="ic-text">Genesys: <strong>UUID</strong>. UKG: <strong>employee number</strong>. Helpdesk: <strong>email</strong>. Redis cache maps any platform ID to canonical in <strong>&lt;2ms</strong>.</div></div>
+        <div class="insight-card"><div class="ic-label">Platform-Agnostic</div><div class="ic-text">Swap Genesys for <strong>NICE CXone</strong>, add <strong>Cognigy</strong> and <strong>Observe.AI</strong> connectors — the MCP layer and anomaly correlation remain identical.</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tab 2: MCP Architecture -->
+  <div class="sub-panel" id="p2-arch">
+    <div class="panel-content">
+      <div class="sl">MCP Server — Tool Registration Pattern</div>
+      <div class="code-block">
+        <div class="code-header" onclick="toggleCode('p2c1')"><div class="code-label">mcp_server.py — daily performance tool</div><div class="code-toggle open" id="toggle-p2c1">▼</div></div>
+        <div class="code-body open" id="p2c1"><pre><span class="kw">from</span> mcp.server <span class="kw">import</span> Server
+<span class="kw">from</span> mcp.types <span class="kw">import</span> Tool, TextContent
+
+server = Server(<span class="st">"ispn-operations"</span>)
+
+<span class="kw">@server.tool</span>()
+<span class="kw">async def</span> <span class="fn">get_daily_performance</span>(date: str) -> <span class="tp">list</span>[TextContent]:
+    <span class="cm">"""Fetch and correlate daily metrics across all platforms."""</span>
+    
+    <span class="cm"># Parallel extraction from all three sources</span>
+    calls, schedule, tickets = <span class="kw">await</span> asyncio.<span class="fn">gather</span>(
+        genesys.<span class="fn">get_conversation_metrics</span>(date),
+        ukg.<span class="fn">get_schedule_adherence</span>(date),
+        helpdesk.<span class="fn">get_ticket_summary</span>(date)
+    )
+    
+    <span class="cm"># Normalize into unified performance model</span>
+    perf = <span class="tp">DailyPerformance</span>(
+        date=date,
+        calls=<span class="fn">normalize_call_metrics</span>(calls),
+        staffing=<span class="fn">normalize_schedule</span>(schedule),
+        tickets=<span class="fn">normalize_tickets</span>(tickets),
+    )
+    
+    <span class="cm"># Cross-platform anomaly detection</span>
+    perf.anomalies = <span class="fn">detect_cross_platform_anomalies</span>(perf)
+    perf.cost_per_contact = <span class="fn">calculate_cpc</span>(
+        labor_hours=perf.staffing.actual_hours,
+        call_volume=perf.calls.total_handled,
+        blended_rate=<span class="nm">19.50</span>
+    )
+    
+    <span class="kw">return</span> [TextContent(text=perf.<span class="fn">to_report</span>())]</pre></div>
+      </div>
+      <div class="code-block">
+        <div class="code-header" onclick="toggleCode('p2c2')"><div class="code-label">normalize.py — unified agent record + ID resolution</div><div class="code-toggle" id="toggle-p2c2">▼</div></div>
+        <div class="code-body" id="p2c2"><pre><span class="kw">@dataclass</span>
+<span class="kw">class</span> <span class="tp">UnifiedAgentRecord</span>:
+    <span class="cm">"""Single agent view across all platforms."""</span>
+    agent_id: str           <span class="cm"># Canonical (mapped from platform IDs)</span>
+    
+    <span class="cm"># From CCaaS</span>
+    calls_handled: <span class="kw">int</span>
+    aht_seconds: <span class="kw">float</span>
+    fcr_rate: <span class="kw">float</span>
+    
+    <span class="cm"># From WFM</span>
+    scheduled_hours: <span class="kw">float</span>
+    actual_hours: <span class="kw">float</span>
+    adherence_pct: <span class="kw">float</span>
+    in_queue_hours: <span class="kw">float</span>     <span class="cm"># actual - (breaks + training)</span>
+    
+    <span class="cm"># From Helpdesk</span>
+    tickets_created: <span class="kw">int</span>
+    escalation_count: <span class="kw">int</span>
+    
+    <span class="cm"># Computed cross-platform</span>
+    utilization: <span class="kw">float</span>       <span class="cm"># (handle_time * calls) / in_queue_sec</span>
+    cost_per_contact: <span class="kw">float</span>  <span class="cm"># (hours * rate) / calls</span>
+    composite_score: <span class="kw">float</span>   <span class="cm"># FCR(30%) + CSAT(25%) + AHT(20%) ...</span>
+
+<span class="kw">def</span> <span class="fn">resolve_agent_id</span>(platform: str, pid: str) -> str:
+    <span class="cm">"""Genesys=UUID, UKG=emp_num, Helpdesk=email → canonical"""</span>
+    <span class="kw">return</span> redis_cache.<span class="fn">get</span>(f<span class="st">"{platform}:{pid}"</span>)  <span class="cm"># &lt;2ms p99</span></pre></div>
+      </div>
+      <div class="sl">Technology Stack</div>
+      <div class="tech-row">
+        <span class="tech-tag">Python 3.11</span><span class="tech-tag">MCP SDK</span><span class="tech-tag">asyncio</span>
+        <span class="tech-tag">Genesys Cloud API</span><span class="tech-tag">UKG API</span><span class="tech-tag">REST / Webhooks</span>
+        <span class="tech-tag">Redis</span><span class="tech-tag">PostgreSQL</span><span class="tech-tag">pandas</span>
+        <span class="tech-tag">scipy (Erlang C)</span><span class="tech-tag">n8n</span><span class="tech-tag">Power BI</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tab 3: Anomaly Sim -->
+  <div class="sub-panel" id="p2-anomaly">
+    <div class="panel-content">
+      <div class="sl">Live Anomaly Correlation — Adjust Metrics to See Classification</div>
+      <div class="sim-grid">
+        <div class="sim-controls">
+          <div class="sim-slider-group"><div class="sim-slider-label"><span class="sim-slider-name">AHT (deviation)</span><span class="sim-slider-val" id="val-aht">+0%</span></div><input type="range" class="sim-slider" id="slider-aht" min="0" max="80" value="0" oninput="updateSim()"></div>
+          <div class="sim-slider-group"><div class="sim-slider-label"><span class="sim-slider-name">Ticket Volume (vs. baseline)</span><span class="sim-slider-val" id="val-tickets">1.0x</span></div><input type="range" class="sim-slider" id="slider-tickets" min="50" max="300" value="100" oninput="updateSim()"></div>
+          <div class="sim-slider-group"><div class="sim-slider-label"><span class="sim-slider-name">Schedule Adherence</span><span class="sim-slider-val" id="val-adherence">92%</span></div><input type="range" class="sim-slider" id="slider-adherence" min="50" max="98" value="92" oninput="updateSim()"></div>
+          <div class="sim-slider-group"><div class="sim-slider-label"><span class="sim-slider-name">Call Volume (deviation)</span><span class="sim-slider-val" id="val-volume">+0%</span></div><input type="range" class="sim-slider" id="slider-volume" min="0" max="100" value="0" oninput="updateSim()"></div>
+          <div class="sim-slider-group"><div class="sim-slider-label"><span class="sim-slider-name">Service Level</span><span class="sim-slider-val" id="val-sl">80%</span></div><input type="range" class="sim-slider" id="slider-sl" min="30" max="95" value="80" oninput="updateSim()"></div>
+        </div>
+        <div class="sim-result">
+          <div class="sim-classification normal" id="sim-class">NORMAL OPERATIONS</div>
+          <div class="sim-diagnosis" id="sim-diag">All metrics within baseline parameters</div>
+          <div class="sim-explanation" id="sim-expl">No anomaly detected. Cross-platform correlation shows aligned signals.</div>
+          <div class="sim-signals">
+            <div class="sim-signal-row"><span class="sim-signal-name">AHT</span><span class="sim-signal-status ok" id="sig-aht">NORMAL</span></div>
+            <div class="sim-signal-row"><span class="sim-signal-name">Tickets</span><span class="sim-signal-status ok" id="sig-tickets">NORMAL</span></div>
+            <div class="sim-signal-row"><span class="sim-signal-name">Adherence</span><span class="sim-signal-status ok" id="sig-adh">NORMAL</span></div>
+            <div class="sim-signal-row"><span class="sim-signal-name">Volume</span><span class="sim-signal-status ok" id="sig-vol">NORMAL</span></div>
+            <div class="sim-signal-row"><span class="sim-signal-name">Service Level</span><span class="sim-signal-status ok" id="sig-sl">ON TARGET</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="insight-row">
+        <div class="insight-card"><div class="ic-label">Why Multi-Signal</div><div class="ic-text">Single-metric alerts = <strong>noise</strong>. AHT↑ + Tickets↑ + Adherence→ is a <strong>system latency signature</strong>. Cross-correlation turns alerts into diagnostics.</div></div>
+        <div class="insight-card"><div class="ic-label">Erlang C Integration</div><div class="ic-text">CAPACITY anomaly triggers automatic <strong>staffing recalculation</strong> using live data — not stale forecasts.</div></div>
+        <div class="insight-card"><div class="ic-label">Action Routing</div><div class="ic-text">SYSTEMIC → platform team. STAFFING → WFM lead. CAPACITY → Erlang recalc. Classification determines <strong>who</strong> gets the alert.</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="metrics-strip">
+    <div class="ms-item"><div class="ms-val">12</div><div class="ms-label">API Endpoints</div></div>
+    <div class="ms-item"><div class="ms-val">&lt;2ms</div><div class="ms-label">ID Resolution</div></div>
+    <div class="ms-item"><div class="ms-val">18</div><div class="ms-label">Auto Reports</div></div>
+    <div class="ms-item"><div class="ms-val">104wk</div><div class="ms-label">Trend Depth</div></div>
+    <div class="ms-item"><div class="ms-val">20+hrs</div><div class="ms-label">Saved / Week</div></div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- ═══ PAGE 3: QUALITY INTELLIGENCE (ROSE) ═══ -->
+<!-- ═══════════════════════════════════════════ -->
+<div class="page p3" id="page-p3">
+
+  <div class="page-header">
+    <div>
+      <div class="ph-label" style="color:var(--rose)">Interactive Architecture — QA Classification Engine</div>
+      <div class="ph-title">Systemic-First Quality Intelligence</div>
+    </div>
+    <div class="ph-metrics">
+      <div><span class="ph-val" style="color:var(--rose)">100%</span><span class="ph-unit">monitoring</span></div>
+      <div><span class="ph-val" style="color:var(--rose)">60%</span><span class="ph-unit">systemic root cause</span></div>
+      <div><span class="ph-val" style="color:var(--rose)">93%</span><span class="ph-unit">FCR achieved</span></div>
+    </div>
+  </div>
+
+  <div class="sub-tabs">
+    <div class="sub-tab active" onclick="showSubTab('p3','scenarios')">Scenario Simulator</div>
+    <div class="sub-tab" onclick="showSubTab('p3','engine')">Classification Engine</div>
+    <div class="sub-tab" onclick="showSubTab('p3','decisions')">Architecture Decisions</div>
+  </div>
+
+  <!-- Tab 1: Scenarios -->
+  <div class="sub-panel active" id="p3-scenarios">
+    <div class="panel-content">
+      <div class="sl">Select a QA failure scenario — watch the engine process through all five gates</div>
+      <div class="scenario-grid">
+        <div class="scenario-card" onclick="selectScenario(0)"><div class="sc-symptom">15 agents fail "accurate information"</div><div class="sc-detail">Standard QA: schedule 15 coaching sessions. But should you?</div><div class="sc-data"><span>Failing: <strong style="color:var(--rose)">15</strong></span><span>Criterion: <strong style="color:var(--rose)">Q7</strong></span></div></div>
+        <div class="scenario-card" onclick="selectScenario(1)"><div class="sc-symptom">AHT spikes 40% on Tuesday</div><div class="sc-detail">Supervisors flag agents as "taking too long." 30+ coaching plans queued.</div><div class="sc-data"><span>AHT: <strong style="color:var(--rose)">+40%</strong></span><span>Affected: <strong style="color:var(--rose)">all</strong></span></div></div>
+        <div class="scenario-card" onclick="selectScenario(2)"><div class="sc-symptom">Agent scores 62% on empathy</div><div class="sc-detail">Single agent, consistent low score. Peer average is 88%.</div><div class="sc-data"><span>Failing: <strong style="color:var(--rose)">1</strong></span><span>Peer avg: <strong style="color:var(--rose)">88%</strong></span></div></div>
+        <div class="scenario-card" onclick="selectScenario(3)"><div class="sc-symptom">5 agents fail documentation — same hire month</div><div class="sc-detail">All hired Oct 2024. Same trainer. Individual plans generated.</div><div class="sc-data"><span>Failing: <strong style="color:var(--rose)">5</strong></span><span>Cohort: <strong style="color:var(--rose)">Oct 24</strong></span></div></div>
+        <div class="scenario-card" onclick="selectScenario(4)"><div class="sc-symptom">12 agents fail hold-time compliance</div><div class="sc-detail">Exceeding max hold during interactions. Compliance team flagging.</div><div class="sc-data"><span>Failing: <strong style="color:var(--rose)">12</strong></span><span>Avg hold: <strong style="color:var(--rose)">4.2m</strong></span></div></div>
+        <div class="scenario-card" onclick="selectScenario(5)"><div class="sc-symptom">2 agents miss call opening script</div><div class="sc-detail">Flagged across multiple evaluations. 96% of peers pass.</div><div class="sc-data"><span>Failing: <strong style="color:var(--rose)">2</strong></span><span>Peer rate: <strong style="color:var(--rose)">96%</strong></span></div></div>
+      </div>
+      <button class="run-btn" id="run-btn" onclick="runEngine()" disabled>▶ Run Classification Engine</button>
+      <div class="engine-display">
+        <div class="gate-sequence">
+          <div class="gate" id="g1"><div class="gate-id">GATE 01</div><div><div class="gate-name">System Health Check</div><div class="gate-desc">Platform outages, latency, routing errors during eval window?</div></div><div class="gate-status pending" id="gs1">—</div></div>
+          <div class="gate" id="g2"><div class="gate-id">GATE 02</div><div><div class="gate-name">Pattern Width</div><div class="gate-desc">3+ agents fail same criterion? Rate &gt; 25%?</div></div><div class="gate-status pending" id="gs2">—</div></div>
+          <div class="gate" id="g3"><div class="gate-id">GATE 03</div><div><div class="gate-name">Process Currency</div><div class="gate-desc">SOP or KB updated within 7 days?</div></div><div class="gate-status pending" id="gs3">—</div></div>
+          <div class="gate" id="g4"><div class="gate-id">GATE 04</div><div><div class="gate-name">Routing Accuracy</div><div class="gate-desc">Interactions correctly skill-matched?</div></div><div class="gate-status pending" id="gs4">—</div></div>
+          <div class="gate" id="g5"><div class="gate-id">GATE 05</div><div><div class="gate-name">Cohort Analysis</div><div class="gate-desc">Shared hire date, trainer, shift? Chi-squared p &lt; 0.05?</div></div><div class="gate-status pending" id="gs5">—</div></div>
+        </div>
+        <div class="result-panel">
+          <div class="result-waiting" id="rw">← Select a scenario and run the engine</div>
+          <div class="result-content" id="rc"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tab 2: Engine Code -->
+  <div class="sub-panel" id="p3-engine">
+    <div class="panel-content">
+      <div class="sl">Core Algorithm — Gate-Based Failure Classification</div>
+      <div class="code-block">
+        <div class="code-header" onclick="toggleCode('p3c1')"><div class="code-label">systemic_detector.py — classification logic</div><div class="code-toggle open" id="toggle-p3c1">▼</div></div>
+        <div class="code-body open" id="p3c1"><pre><span class="kw">def</span> <span class="fn">classify_qa_failure</span>(criterion_id, failing_agents, eval_window, ctx):
+    
+    <span class="cm"># GATE 1: System health</span>
+    events = ctx.<span class="fn">get_system_events</span>(eval_window)
+    has_outage = <span class="kw">any</span>(e.type <span class="kw">in</span> [<span class="st">"OUTAGE"</span>, <span class="st">"LATENCY_SPIKE"</span>] <span class="kw">for</span> e <span class="kw">in</span> events)
+    
+    n = <span class="fn">len</span>(failing_agents)
+    rate = n / ctx.<span class="fn">agents_evaluated_on</span>(criterion_id, eval_window)
+    
+    <span class="kw">if</span> n >= <span class="nm">3</span> <span class="kw">and</span> has_outage:
+        <span class="kw">return</span> <span class="tp">Classification</span>(type=<span class="st">"SYSTEMIC"</span>, coaching_blocked=<span class="kw">True</span>,
+            action=<span class="st">"FIX_SYSTEM → RE_EVALUATE"</span>)
+    
+    <span class="cm"># GATE 3: KB/SOP updated within 7 days</span>
+    recent = [a <span class="kw">for</span> a <span class="kw">in</span> kb.<span class="fn">get_articles</span>(criterion_id)
+              <span class="kw">if</span> a.modified > eval_window.start - timedelta(days=<span class="nm">7</span>)]
+    
+    <span class="kw">if</span> n >= <span class="nm">3</span> <span class="kw">and</span> recent:
+        <span class="kw">return</span> <span class="tp">Classification</span>(type=<span class="st">"SYSTEMIC"</span>, coaching_blocked=<span class="kw">True</span>,
+            action=<span class="st">"VERIFY_COMMUNICATION → RE_EVALUATE"</span>)
+    
+    <span class="kw">if</span> n >= <span class="nm">3</span> <span class="kw">and</span> rate > <span class="nm">0.25</span>:
+        <span class="kw">return</span> <span class="tp">Classification</span>(type=<span class="st">"SYSTEMIC"</span>, coaching_blocked=<span class="kw">True</span>)
+    
+    <span class="cm"># GATE 5: Cohort pattern</span>
+    cohort = <span class="fn">detect_cohort</span>(failing_agents)  <span class="cm"># chi-squared p &lt; 0.05</span>
+    <span class="kw">if</span> cohort.is_significant:
+        <span class="kw">return</span> <span class="tp">Classification</span>(type=<span class="st">"COHORT"</span>, root=cohort.shared_attribute)
+    
+    <span class="kw">return</span> <span class="tp">Classification</span>(type=<span class="st">"INDIVIDUAL"</span>,
+        coaching_plan=<span class="fn">build_plan</span>(failing_agents, criterion_id))</pre></div>
+      </div>
+      <div class="code-block">
+        <div class="code-header" onclick="toggleCode('p3c2')"><div class="code-label">cohort_analyzer.py — chi-squared pattern detection</div><div class="code-toggle" id="toggle-p3c2">▼</div></div>
+        <div class="code-body" id="p3c2"><pre><span class="kw">def</span> <span class="fn">detect_cohort</span>(agent_ids):
+    agents = [roster.<span class="fn">get</span>(id) <span class="kw">for</span> id <span class="kw">in</span> agent_ids]
+    
+    <span class="kw">for</span> dim <span class="kw">in</span> [<span class="st">"hire_cohort"</span>, <span class="st">"trainer"</span>, <span class="st">"shift"</span>, <span class="st">"team_lead"</span>]:
+        values = [<span class="fn">getattr</span>(a, dim) <span class="kw">for</span> a <span class="kw">in</span> agents]
+        top_val, count = Counter(values).<span class="fn">most_common</span>(<span class="nm">1</span>)[<span class="nm">0</span>]
+        conc = count / <span class="fn">len</span>(values)
+        
+        <span class="cm"># Test against roster base rate</span>
+        expected = roster.<span class="fn">get_distribution</span>(dim, top_val)
+        chi2, p = <span class="fn">chi_squared</span>(count, <span class="fn">len</span>(values), expected)
+        
+        <span class="kw">if</span> conc >= <span class="nm">0.60</span> <span class="kw">and</span> p < <span class="nm">0.05</span>:
+            <span class="kw">return</span> <span class="tp">CohortResult</span>(is_significant=<span class="kw">True</span>,
+                shared_attribute=dim, p_value=p)
+    
+    <span class="kw">return</span> <span class="tp">CohortResult</span>(is_significant=<span class="kw">False</span>)</pre></div>
+      </div>
+      <div class="sl">Technology Stack</div>
+      <div class="tech-row">
+        <span class="tech-tag">Python 3.11</span><span class="tech-tag">pandas</span><span class="tech-tag">scipy.stats</span>
+        <span class="tech-tag">chi-squared</span><span class="tech-tag">FastAPI</span><span class="tech-tag">PostgreSQL</span>
+        <span class="tech-tag">Genesys QA API</span><span class="tech-tag">Observe.AI API</span><span class="tech-tag">n8n</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tab 3: Decisions -->
+  <div class="sub-panel" id="p3-decisions">
+    <div class="panel-content">
+      <div class="sl">Why These Design Decisions</div>
+      <div class="insight-row">
+        <div class="insight-card"><div class="ic-label">Why Gate-Based, Not ML</div><div class="ic-text">ML needs <strong>labeled training data</strong> that doesn't exist. Gate rules are <strong>explainable, auditable, instantly deployable</strong>. After 12+ months of classification data, train a model on top.</div></div>
+        <div class="insight-card"><div class="ic-label">Why Chi-Squared</div><div class="ic-text">"4 of 5 from same trainer" is a false positive when that trainer trained <strong>60% of the floor</strong>. Chi-squared tests against <strong>base rate distribution</strong>. p &lt; 0.05 = 95% confidence.</div></div>
+        <div class="insight-card"><div class="ic-label">coaching_blocked = True</div><div class="ic-text">Without a hard block, supervisors default to individual coaching. The flag <strong>forces the system-fix path</strong>. Not a suggestion — a gate.</div></div>
+      </div>
+      <div class="insight-row">
+        <div class="insight-card"><div class="ic-label">Platform Compatibility</div><div class="ic-text">Sits on top of <strong>Observe.AI, Calabrio, NICE Quality Central, CallMiner</strong>. Tool provides scoring. Engine provides <strong>classification intelligence</strong>.</div></div>
+        <div class="insight-card"><div class="ic-label">Composite Scoring</div><div class="ic-text"><strong>FCR (30%) + CSAT (25%) + AHT (20%) + Adherence (15%) + QA (10%)</strong>. Configurable per role. Prevents gaming one metric.</div></div>
+        <div class="insight-card"><div class="ic-label">Deming's 85/15</div><div class="ic-text">85% of quality problems originate in <strong>the system, not the worker</strong>. Manufacturing applied this 70 years ago. This engine brings it to contact centers.</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="metrics-strip">
+    <div class="ms-item"><div class="ms-val">100%</div><div class="ms-label">Monitoring</div></div>
+    <div class="ms-item"><div class="ms-val">60%</div><div class="ms-label">Systemic Root</div></div>
+    <div class="ms-item"><div class="ms-val">-45%</div><div class="ms-label">Misattributed</div></div>
+    <div class="ms-item"><div class="ms-val">93%</div><div class="ms-label">FCR</div></div>
+    <div class="ms-item"><div class="ms-val">90%+</div><div class="ms-label">CSAT</div></div>
+  </div>
+</div>
+
+<script>
+// ═══ NAVIGATION ═══
+function showPage(id){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-link').forEach(n=>{n.className='nav-link'});
+  document.getElementById('page-'+id).classList.add('active');
+  event.target.classList.add(id==='p2'?'active-cyan':'active-rose');
+}
+
+function showSubTab(page,tab){
+  const container=document.getElementById('page-'+page);
+  container.querySelectorAll('.sub-tab').forEach(t=>t.classList.remove('active'));
+  container.querySelectorAll('.sub-panel').forEach(p=>p.classList.remove('active'));
+  event.target.classList.add('active');
+  document.getElementById(page+'-'+tab).classList.add('active');
+}
+
+function toggleCode(id){
+  document.getElementById(id).classList.toggle('open');
+  document.getElementById('toggle-'+id).classList.toggle('open');
+}
+
+// ═══ PIECE 2: PLATFORM SELECTOR ═══
+const endpoints={
+  genesys:{title:'Genesys Cloud — API Endpoints',rows:[
+    {path:'/api/v2/analytics/conversations/details/query',method:'post',freq:'15 min',desc:'Conversation metrics — AHT, hold time, transfers'},
+    {path:'/api/v2/analytics/queues/observations/query',method:'post',freq:'5 min',desc:'Real-time queue depth, SL, wait time'},
+    {path:'/api/v2/users/{id}/routingstatus',method:'get',freq:'5 min',desc:'Agent routing status'},
+    {path:'/api/v2/quality/evaluations/query',method:'post',freq:'daily',desc:'QA scores by agent, form, criterion'},
+  ]},
+  ukg:{title:'UKG — API Endpoints',rows:[
+    {path:'/api/v1/timekeeping/timecard/multi_read',method:'post',freq:'daily',desc:'Hours worked, overtime, break compliance'},
+    {path:'/api/v1/scheduling/schedule/multi_read',method:'post',freq:'daily',desc:'Scheduled shifts, in-queue vs out-of-queue'},
+    {path:'/api/v1/timekeeping/pay_code_edits',method:'get',freq:'daily',desc:'Attendance events — callouts, tardies'},
+  ]},
+  helpdesk:{title:'Helpdesk — API Endpoints',rows:[
+    {path:'/api/tickets?status=open&date_from={date}',method:'get',freq:'30 min',desc:'Ticket volume by category, priority'},
+    {path:'webhook: ticket.escalated → listener',method:'webhook',freq:'real-time',desc:'Escalation notification → anomaly correlation'},
+  ]}
+};
+
+function selectPlatform(p){
+  document.querySelectorAll('.platform-card').forEach(c=>c.classList.remove('selected'));
+  event.currentTarget.classList.add('selected');
+  const d=endpoints[p],drawer=document.getElementById('endpoint-drawer');
+  document.getElementById('drawer-title').textContent=d.title;
+  document.getElementById('drawer-body').innerHTML=d.rows.map(r=>`
+    <div class="endpoint-row">
+      <div><div class="ep-path">${r.path}</div><div style="font-size:10px;color:var(--text-muted);margin-top:4px">${r.desc}</div></div>
+      <div class="ep-method ${r.method}">${r.method.toUpperCase()}</div>
+      <div class="ep-freq">${r.freq}</div>
+    </div>`).join('');
+  drawer.classList.add('open');
+}
+
+function closePlatform(){
+  document.getElementById('endpoint-drawer').classList.remove('open');
+  document.querySelectorAll('.platform-card').forEach(c=>c.classList.remove('selected'));
+}
+
+// ═══ PIECE 2: ANOMALY SIMULATOR ═══
+function updateSim(){
+  const a=+document.getElementById('slider-aht').value,
+    t=+document.getElementById('slider-tickets').value,
+    ad=+document.getElementById('slider-adherence').value,
+    v=+document.getElementById('slider-volume').value,
+    s=+document.getElementById('slider-sl').value;
+  document.getElementById('val-aht').textContent='+'+a+'%';
+  document.getElementById('val-tickets').textContent=(t/100).toFixed(1)+'x';
+  document.getElementById('val-adherence').textContent=ad+'%';
+  document.getElementById('val-volume').textContent='+'+v+'%';
+  document.getElementById('val-sl').textContent=s+'%';
+
+  const sa=document.getElementById('sig-aht'),st=document.getElementById('sig-tickets'),
+    sd=document.getElementById('sig-adh'),sv=document.getElementById('sig-vol'),ss=document.getElementById('sig-sl');
+  sa.textContent=a>30?'↑ ELEVATED':'NORMAL';sa.className='sim-signal-status '+(a>30?'up':'ok');
+  st.textContent=t>150?'↑ ELEVATED':'NORMAL';st.className='sim-signal-status '+(t>150?'up':'ok');
+  sd.textContent=ad<80?'↓ LOW':'NORMAL';sd.className='sim-signal-status '+(ad<80?'down':'ok');
+  sv.textContent=v>40?'↑ ELEVATED':'NORMAL';sv.className='sim-signal-status '+(v>40?'up':'ok');
+  ss.textContent=s<65?'↓ BELOW':'ON TARGET';ss.className='sim-signal-status '+(s<65?'down':'ok');
+
+  const cl=document.getElementById('sim-class'),dg=document.getElementById('sim-diag'),ex=document.getElementById('sim-expl');
+  if(a>30&&t>150&&ad>80){cl.textContent='SYSTEMIC — PLATFORM ISSUE';cl.className='sim-classification systemic';dg.textContent='System latency or tooling failure detected';ex.textContent='AHT elevated with ticket surge but adherence normal — agents are present, something is slowing them down. Check CRM latency, routing errors, integration failures. Do NOT coach agents.';}
+  else if(v>40&&s<65){cl.textContent='CAPACITY — DEMAND SPIKE';cl.className='sim-classification capacity';dg.textContent='Volume exceeds staffing model — Erlang C recalc triggered';ex.textContent='Demand exceeds forecast by >'+v+'%. Service level below target. Engine recalculates required FTEs and escalates to WFM lead.';}
+  else if(a>30&&ad<80){cl.textContent='STAFFING — SCHEDULE GAP';cl.className='sim-classification staffing';dg.textContent='Understaffing creating performance degradation';ex.textContent='AHT elevated AND adherence low — agents missing shifts or pulled off-queue. Remaining agents overloaded. Route to WFM, not QA.';}
+  else{cl.textContent='NORMAL OPERATIONS';cl.className='sim-classification normal';dg.textContent='All metrics within baseline';ex.textContent='No anomaly. Cross-platform signals aligned. Standard workflows apply.';}
+}
+
+// ═══ PIECE 3: SCENARIO ENGINE ═══
+const scenarios=[
+  {gates:[{s:'pass',l:'NO EVENT'},{s:'trigger',l:'TRIGGERED'},{s:'trigger',l:'KB UPDATED'},{s:'pass',l:'OK'},{s:'skip',l:'—'}],r:{ct:'systemic',cl:'SYSTEMIC — PROCESS CHANGE',t:'KB updated without agent notification',d:'Gate 3: knowledge base updated 4 days ago. 15 agents citing old procedure = one communication failure.',b:true,yes:'Verify KB update communicated. Republish with change summary. Re-evaluate in 7 days.',no:'Do NOT generate 15 coaching plans. System failed to communicate, not the agents.'}},
+  {gates:[{s:'trigger',l:'LATENCY SPIKE'},{s:'trigger',l:'ALL AGENTS'},{s:'pass',l:'NO CHANGE'},{s:'pass',l:'OK'},{s:'skip',l:'—'}],r:{ct:'systemic',cl:'SYSTEMIC — PLATFORM EVENT',t:'CRM latency spike — 30s delays per screen load',d:'Gate 1: CRM response times 5x normal. Every agent affected equally. AHT increase matches wait time per transaction.',b:true,yes:'Escalate CRM latency. Request incident report. Exclude evaluations from scoring.',no:'Do NOT coach 30+ agents on handle time. The system was slow, not the agents.'}},
+  {gates:[{s:'pass',l:'NO EVENT'},{s:'pass',l:'1 AGENT'},{s:'pass',l:'NO CHANGE'},{s:'pass',l:'OK'},{s:'pass',l:'NO PATTERN'}],r:{ct:'individual',cl:'INDIVIDUAL — CONFIRMED GAP',t:'Genuine empathy skill gap — coaching appropriate',d:'All gates passed. 1 agent, 62% vs 88% peer avg. Confirmed individual gap.',b:false,yes:'Targeted plan: specific examples, shadow sessions with top performer, 14-day follow-up.',no:'N/A — this IS the right time for individual coaching. All systemic causes ruled out.'}},
+  {gates:[{s:'pass',l:'NO EVENT'},{s:'trigger',l:'5 AGENTS'},{s:'pass',l:'NO CHANGE'},{s:'pass',l:'OK'},{s:'trigger',l:'p = 0.003'}],r:{ct:'cohort',cl:'COHORT — ONBOARDING GAP',t:'Same trainer, same hire month — onboarding deficiency',d:'Gate 5: all 5 hired Oct 2024, same trainer. p = 0.003. 3x documentation failure rate vs other cohorts.',b:false,yes:'Review trainer curriculum. Group refresher for Oct 2024 cohort. Audit other criteria.',no:'Do NOT create 5 individual PIPs. Root cause is upstream in onboarding.'}},
+  {gates:[{s:'pass',l:'NO EVENT'},{s:'trigger',l:'12 AGENTS'},{s:'pass',l:'NO CHANGE'},{s:'trigger',l:'SKILL MISMATCH'},{s:'pass',l:'NO PATTERN'}],r:{ct:'systemic',cl:'SYSTEMIC — ROUTING ERROR',t:'Complex calls routed to general queue',d:'Gate 4: specialty calls routed to agents without required permissions. Hold time from searching for workarounds.',b:true,yes:'Audit ACD routing. Verify skill assignments. Add routing guards.',no:'Do NOT coach hold-time compliance. They were given calls they couldn\'t handle.'}},
+  {gates:[{s:'pass',l:'NO EVENT'},{s:'pass',l:'2 AGENTS'},{s:'pass',l:'NO CHANGE'},{s:'pass',l:'OK'},{s:'pass',l:'NO PATTERN'}],r:{ct:'individual',cl:'INDIVIDUAL — CONFIRMED GAP',t:'Script adherence failure — coaching appropriate',d:'All gates passed. 2 agents, 4+ failures each, 96% peer compliance. Confirmed non-compliance.',b:false,yes:'Individual plans with recordings. Side-by-side comparison. 7-day follow-up.',no:'N/A — all systemic causes ruled out. Individual coaching is correct.'}}
+];
+
+let selSc=-1,running=false;
+
+function selectScenario(i){
+  if(running)return;selSc=i;
+  document.querySelectorAll('.scenario-card').forEach((c,j)=>c.classList.toggle('selected',j===i));
+  document.getElementById('run-btn').disabled=false;resetGates();
+}
+
+function resetGates(){
+  for(let i=1;i<=5;i++){document.getElementById('g'+i).className='gate';const s=document.getElementById('gs'+i);s.textContent='—';s.className='gate-status pending';}
+  document.getElementById('rw').style.display='flex';document.getElementById('rc').className='result-content';
+}
+
+function runEngine(){
+  if(selSc<0||running)return;running=true;document.getElementById('run-btn').disabled=true;resetGates();
+  const s=scenarios[selSc];let d=0;
+  s.gates.forEach((g,i)=>{
+    const gi=i+1;
+    setTimeout(()=>{document.getElementById('g'+gi).className='gate checking';document.getElementById('gs'+gi).textContent='CHECKING...';},d);d+=600;
+    setTimeout(()=>{
+      const gate=document.getElementById('g'+gi),gs=document.getElementById('gs'+gi);
+      if(g.s==='trigger'){gate.className='gate triggered';gs.textContent='⚑ '+g.l;gs.className='gate-status trigger';}
+      else if(g.s==='pass'){gate.className='gate passed';gs.textContent='✓ '+g.l;gs.className='gate-status pass';}
+      else{gate.className='gate passed';gs.textContent=g.l;gs.className='gate-status pending';}
+    },d);d+=300;
+  });
+  setTimeout(()=>{
+    const r=s.r;document.getElementById('rw').style.display='none';
+    let h=`<div class="result-class ${r.ct}">${r.cl}</div><div class="result-title">${r.t}</div><div class="result-detail">${r.d}</div>`;
+    h+=r.b?'<div class="coaching-blocked">⊘ coaching_blocked = True</div>':r.ct==='individual'?'<div class="coaching-allowed">✓ coaching_plan generated</div>':'';
+    h+=`<div class="result-action do"><div class="ra-label">✓ Correct Action</div><div class="ra-text">${r.yes}</div></div>`;
+    h+=`<div class="result-action dont"><div class="ra-label">✕ Wrong Action</div><div class="ra-text">${r.no}</div></div>`;
+    document.getElementById('rc').innerHTML=h;document.getElementById('rc').className='result-content visible';
+    running=false;document.getElementById('run-btn').disabled=false;
+  },d+400);
+}
+</script>
+</body>
+</html>

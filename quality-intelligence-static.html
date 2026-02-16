@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Systemic-First Quality Intelligence — Technical Architecture</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg: #09090b;
+    --surface: #111113;
+    --surface-alt: #18181b;
+    --border: #27272a;
+    --text: #fafafa;
+    --text-secondary: #a1a1aa;
+    --text-muted: #71717a;
+    --accent: #fb7185;
+    --accent-muted: rgba(251, 113, 133, 0.08);
+    --accent-border: rgba(251, 113, 133, 0.25);
+    --success: #4ade80;
+    --error: #ef4444;
+    --warning: #fbbf24;
+    --cyan: #22d3ee;
+    --purple: #c084fc;
+    --mono: 'JetBrains Mono', monospace;
+    --sans: 'Plus Jakarta Sans', system-ui, sans-serif;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    min-height: 100vh;
+  }
+
+  .header {
+    border-bottom: 1px solid var(--border);
+    padding: 20px 32px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+  }
+
+  .header-label {
+    font-size: 9px; font-weight: 500; letter-spacing: 0.12em;
+    color: var(--accent); text-transform: uppercase; margin-bottom: 4px;
+  }
+
+  .header-title { font-size: 20px; font-weight: 400; }
+
+  .header-metrics { display: flex; gap: 48px; align-items: baseline; }
+
+  .hm-val {
+    font-family: var(--mono); font-size: 28px; font-weight: 600;
+    color: var(--accent); letter-spacing: -0.02em;
+  }
+
+  .hm-label { font-size: 11px; color: var(--text-muted); margin-left: 6px; }
+
+  .context-bar {
+    padding: 14px 32px; border-bottom: 1px solid var(--border);
+    background: var(--surface); font-size: 12px; color: var(--text-secondary);
+    display: flex; justify-content: space-between;
+  }
+
+  .context-bar .hl { color: var(--accent); font-weight: 600; }
+
+  .main {
+    display: grid; grid-template-columns: 1fr 380px;
+    min-height: calc(100vh - 140px);
+  }
+
+  .center { padding: 28px 32px; border-right: 1px solid var(--border); }
+  .right { padding: 24px; background: var(--surface); }
+
+  .sl {
+    font-size: 9px; font-weight: 500; letter-spacing: 0.1em;
+    color: var(--text-muted); text-transform: uppercase; margin-bottom: 14px;
+  }
+
+  /* ── Code Blocks ── */
+  .code-block {
+    background: var(--surface-alt);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 16px 20px;
+    margin-bottom: 20px;
+    overflow-x: auto;
+  }
+
+  .code-block pre {
+    font-family: var(--mono);
+    font-size: 11px;
+    line-height: 1.7;
+    color: var(--text-secondary);
+    white-space: pre;
+    margin: 0;
+  }
+
+  .code-block .comment { color: var(--text-muted); }
+  .code-block .keyword { color: var(--accent); }
+  .code-block .string { color: var(--success); }
+  .code-block .func { color: var(--warning); }
+  .code-block .num { color: var(--purple); }
+  .code-block .type { color: var(--cyan); }
+
+  .code-label {
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 0.08em;
+    color: var(--accent);
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+
+  /* ── Decision Matrix ── */
+  .matrix-table {
+    width: 100%; border-collapse: collapse; margin-bottom: 24px;
+  }
+
+  .matrix-table th {
+    font-size: 9px; font-weight: 500; letter-spacing: 0.08em;
+    color: var(--text-muted); text-transform: uppercase;
+    padding: 10px 12px; text-align: left;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+  }
+
+  .matrix-table td {
+    padding: 10px 12px; font-size: 11px;
+    color: var(--text-secondary); border-bottom: 1px solid var(--border);
+    vertical-align: top; line-height: 1.5;
+  }
+
+  .matrix-table td:first-child {
+    font-family: var(--mono); font-weight: 500; white-space: nowrap;
+  }
+
+  .tag-sys {
+    display: inline-block; padding: 2px 8px; border-radius: 3px;
+    font-family: var(--mono); font-size: 9px;
+    background: rgba(251, 191, 36, 0.1); color: var(--warning);
+  }
+
+  .tag-ind {
+    display: inline-block; padding: 2px 8px; border-radius: 3px;
+    font-family: var(--mono); font-size: 9px;
+    background: rgba(74, 222, 128, 0.1); color: var(--success);
+  }
+
+  .tag-cohort {
+    display: inline-block; padding: 2px 8px; border-radius: 3px;
+    font-family: var(--mono); font-size: 9px;
+    background: rgba(251, 113, 133, 0.1); color: var(--accent);
+  }
+
+  /* ── Schema Table ── */
+  .schema-table {
+    width: 100%; border-collapse: collapse; margin-bottom: 20px;
+  }
+
+  .schema-table th {
+    font-size: 9px; font-weight: 500; letter-spacing: 0.08em;
+    color: var(--text-muted); text-transform: uppercase;
+    padding: 8px 12px; text-align: left;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .schema-table td {
+    padding: 8px 12px; font-size: 11px;
+    color: var(--text-secondary); border-bottom: 1px solid var(--border);
+    vertical-align: top; line-height: 1.5;
+  }
+
+  .schema-table td:first-child {
+    font-family: var(--mono); color: var(--accent); font-weight: 500; white-space: nowrap;
+  }
+
+  .type-badge {
+    display: inline-block; padding: 1px 6px; border-radius: 3px;
+    font-family: var(--mono); font-size: 9px;
+  }
+  .type-badge.str { background: rgba(74, 222, 128, 0.1); color: var(--success); }
+  .type-badge.int { background: rgba(192, 132, 252, 0.1); color: var(--purple); }
+  .type-badge.bool { background: rgba(251, 191, 36, 0.1); color: var(--warning); }
+  .type-badge.arr { background: rgba(251, 113, 133, 0.1); color: var(--accent); }
+  .type-badge.obj { background: rgba(34, 211, 238, 0.1); color: var(--cyan); }
+
+  /* ── Right Panel ── */
+  .rs { margin-bottom: 26px; }
+
+  .insight-card {
+    padding: 14px; border-left: 3px solid var(--accent);
+    background: var(--surface-alt); border-radius: 0 6px 6px 0;
+    margin-bottom: 14px;
+  }
+
+  .ic-label {
+    font-size: 9px; font-weight: 500; letter-spacing: 0.1em;
+    color: var(--accent); text-transform: uppercase; margin-bottom: 6px;
+  }
+
+  .ic-text {
+    font-size: 11px; color: var(--text-secondary); line-height: 1.6;
+  }
+  .ic-text strong { color: var(--text); font-weight: 600; }
+
+  .tech-tag {
+    display: inline-block; padding: 3px 8px;
+    background: var(--surface-alt); border: 1px solid var(--border);
+    border-radius: 4px; font-size: 10px; font-family: var(--mono);
+    color: var(--text-secondary); margin: 0 5px 5px 0;
+  }
+
+  .metric-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 8px 0; border-bottom: 1px solid var(--border);
+  }
+  .mr-label { font-size: 11px; color: var(--text-secondary); }
+  .mr-val { font-family: var(--mono); font-size: 13px; font-weight: 600; }
+  .mr-val.accent { color: var(--accent); }
+  .mr-val.positive { color: var(--success); }
+
+  .check-list {
+    list-style: none; padding: 0;
+  }
+
+  .check-list li {
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 11px;
+    color: var(--text-secondary);
+    line-height: 1.5;
+    display: flex;
+    gap: 8px;
+  }
+
+  .check-list li:last-child { border-bottom: none; }
+
+  .check-num {
+    font-family: var(--mono); font-size: 10px;
+    color: var(--accent); min-width: 24px; flex-shrink: 0;
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <div class="header-label">Technical Architecture — Automated QA with Systemic Diagnostics</div>
+    <div class="header-title">Systemic-First Quality Intelligence Engine</div>
+  </div>
+  <div class="header-metrics">
+    <div>
+      <span class="hm-val">100%</span>
+      <span class="hm-label">monitoring coverage</span>
+    </div>
+    <div>
+      <span class="hm-val">60%</span>
+      <span class="hm-label">systemic root cause</span>
+    </div>
+  </div>
+</div>
+
+<div class="context-bar">
+  <div><span class="hl">Architecture:</span> Automated QA scoring engine with systemic detection layer — classifies every failure as SYSTEMIC, COHORT, or INDIVIDUAL before generating coaching actions</div>
+  <div><span class="hl">ISPN Network Services</span> · 150+ agents</div>
+</div>
+
+<div class="main">
+  <div class="center">
+
+    <div class="sl">Core Algorithm — Systemic Detection Engine</div>
+
+    <div class="code-block">
+      <div class="code-label">systemic_detector.py — failure classification</div>
+      <pre><span class="keyword">def</span> <span class="func">classify_qa_failure</span>(
+    criterion_id: str,
+    failing_agents: <span class="type">list</span>[str],
+    eval_window: <span class="type">DateRange</span>,
+    context: <span class="type">OperationalContext</span>
+) -> <span class="type">FailureClassification</span>:
+    
+    <span class="comment"># GATE 1: Pattern width — how many agents failed this criterion?</span>
+    n_failing = <span class="func">len</span>(failing_agents)
+    total_evaluated = context.<span class="func">agents_evaluated_on</span>(criterion_id, eval_window)
+    failure_rate = n_failing / total_evaluated
+    
+    <span class="comment"># GATE 2: System health — were there platform issues during eval window?</span>
+    system_events = context.<span class="func">get_system_events</span>(eval_window)
+    has_outage = <span class="keyword">any</span>(e.type <span class="keyword">in</span> [<span class="string">"OUTAGE"</span>, <span class="string">"LATENCY_SPIKE"</span>, <span class="string">"ROUTING_ERROR"</span>]
+                     <span class="keyword">for</span> e <span class="keyword">in</span> system_events)
+    
+    <span class="comment"># GATE 3: Process currency — was relevant SOP/KB updated recently?</span>
+    related_articles = kb.<span class="func">get_articles_for_criterion</span>(criterion_id)
+    recent_updates = [a <span class="keyword">for</span> a <span class="keyword">in</span> related_articles
+                      <span class="keyword">if</span> a.last_modified > eval_window.start - timedelta(days=<span class="num">7</span>)]
+    
+    <span class="comment"># GATE 4: Cohort analysis — do failing agents share attributes?</span>
+    cohort = <span class="func">detect_cohort_pattern</span>(failing_agents)
+    
+    <span class="comment"># ── Classification Logic ──</span>
+    <span class="keyword">if</span> n_failing >= <span class="num">3</span> <span class="keyword">and</span> has_outage:
+        <span class="keyword">return</span> <span class="type">FailureClassification</span>(
+            type=<span class="string">"SYSTEMIC"</span>,
+            root_cause=<span class="string">"SYSTEM_EVENT"</span>,
+            evidence=system_events,
+            action=<span class="string">"FIX_SYSTEM → RE_EVALUATE"</span>,
+            <span class="comment"># Do NOT generate coaching plans</span>
+            coaching_blocked=<span class="keyword">True</span>,
+            reason=<span class="string">"System event during evaluation window"</span>
+        )
+    
+    <span class="keyword">if</span> n_failing >= <span class="num">3</span> <span class="keyword">and</span> recent_updates:
+        <span class="keyword">return</span> <span class="type">FailureClassification</span>(
+            type=<span class="string">"SYSTEMIC"</span>,
+            root_cause=<span class="string">"PROCESS_CHANGE"</span>,
+            evidence=recent_updates,
+            action=<span class="string">"VERIFY_COMMUNICATION → RE_EVALUATE"</span>,
+            coaching_blocked=<span class="keyword">True</span>,
+            reason=<span class="string">"KB/SOP change within 7 days of eval window"</span>
+        )
+    
+    <span class="keyword">if</span> n_failing >= <span class="num">3</span> <span class="keyword">and</span> failure_rate > <span class="num">0.25</span>:
+        <span class="keyword">return</span> <span class="type">FailureClassification</span>(
+            type=<span class="string">"SYSTEMIC"</span>,
+            root_cause=<span class="string">"WIDESPREAD_GAP"</span>,
+            evidence={<span class="string">"failure_rate"</span>: failure_rate, <span class="string">"n"</span>: n_failing},
+            action=<span class="string">"PROCESS_REVIEW → GROUP_TRAINING"</span>,
+            coaching_blocked=<span class="keyword">True</span>
+        )
+    
+    <span class="keyword">if</span> cohort.is_significant:
+        <span class="keyword">return</span> <span class="type">FailureClassification</span>(
+            type=<span class="string">"COHORT"</span>,
+            root_cause=cohort.shared_attribute,
+            evidence=cohort,
+            action=<span class="string">"TARGETED_COHORT_INTERVENTION"</span>
+        )
+    
+    <span class="comment"># Only reach here if failure is truly isolated</span>
+    <span class="keyword">return</span> <span class="type">FailureClassification</span>(
+        type=<span class="string">"INDIVIDUAL"</span>,
+        root_cause=<span class="string">"PERFORMANCE_GAP"</span>,
+        action=<span class="string">"GENERATE_COACHING_PLAN"</span>,
+        coaching_plan=<span class="func">build_coaching_plan</span>(failing_agents, criterion_id)
+    )</pre>
+    </div>
+
+    <div class="sl">Cohort Detection — Shared Attribute Analysis</div>
+
+    <div class="code-block">
+      <div class="code-label">cohort_analyzer.py — statistical pattern detection</div>
+      <pre><span class="keyword">def</span> <span class="func">detect_cohort_pattern</span>(agent_ids: <span class="type">list</span>[str]) -> <span class="type">CohortResult</span>:
+    <span class="comment">"""Check if failing agents share a non-obvious attribute."""</span>
+    
+    agents = [roster.<span class="func">get</span>(id) <span class="keyword">for</span> id <span class="keyword">in</span> agent_ids]
+    
+    dimensions = {
+        <span class="string">"hire_cohort"</span>:  [a.hire_date.<span class="func">strftime</span>(<span class="string">"%Y-%m"</span>) <span class="keyword">for</span> a <span class="keyword">in</span> agents],
+        <span class="string">"trainer"</span>:      [a.onboarding_trainer <span class="keyword">for</span> a <span class="keyword">in</span> agents],
+        <span class="string">"shift"</span>:        [a.primary_shift <span class="keyword">for</span> a <span class="keyword">in</span> agents],
+        <span class="string">"team_lead"</span>:    [a.team_lead_id <span class="keyword">for</span> a <span class="keyword">in</span> agents],
+        <span class="string">"location"</span>:     [a.site_code <span class="keyword">for</span> a <span class="keyword">in</span> agents],
+        <span class="string">"skill_group"</span>:  [a.primary_skill <span class="keyword">for</span> a <span class="keyword">in</span> agents],
+    }
+    
+    <span class="keyword">for</span> dim_name, values <span class="keyword">in</span> dimensions.items():
+        counter = Counter(values)
+        most_common_val, most_common_count = counter.<span class="func">most_common</span>(<span class="num">1</span>)[<span class="num">0</span>]
+        concentration = most_common_count / <span class="func">len</span>(values)
+        
+        <span class="comment"># Chi-squared test against expected distribution</span>
+        expected_rate = roster.<span class="func">get_dimension_distribution</span>(dim_name, most_common_val)
+        chi2, p_value = <span class="func">chi_squared_test</span>(
+            observed=most_common_count,
+            total=<span class="func">len</span>(values),
+            expected_rate=expected_rate
+        )
+        
+        <span class="keyword">if</span> concentration >= <span class="num">0.60</span> <span class="keyword">and</span> p_value < <span class="num">0.05</span>:
+            <span class="keyword">return</span> <span class="type">CohortResult</span>(
+                is_significant=<span class="keyword">True</span>,
+                shared_attribute=dim_name,
+                shared_value=most_common_val,
+                concentration=concentration,
+                p_value=p_value,
+                recommendation=<span class="func">generate_cohort_action</span>(dim_name, most_common_val)
+            )
+    
+    <span class="keyword">return</span> <span class="type">CohortResult</span>(is_significant=<span class="keyword">False</span>)</pre>
+    </div>
+
+    <div class="sl">Classification Decision Matrix</div>
+
+    <table class="matrix-table">
+      <thead>
+        <tr><th>Gate Check</th><th>Threshold</th><th>If True</th><th>Classification</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td style="color: var(--accent);">n_failing ≥ 3 + system_event</td>
+          <td>Outage/latency/routing error in eval window</td>
+          <td>Block coaching → fix system → re-evaluate</td>
+          <td><span class="tag-sys">SYSTEMIC</span></td>
+        </tr>
+        <tr>
+          <td style="color: var(--accent);">n_failing ≥ 3 + KB update</td>
+          <td>Related SOP/article changed within 7 days</td>
+          <td>Block coaching → verify communication → re-evaluate</td>
+          <td><span class="tag-sys">SYSTEMIC</span></td>
+        </tr>
+        <tr>
+          <td style="color: var(--accent);">n_failing ≥ 3 + rate &gt; 25%</td>
+          <td>&gt;25% of evaluated agents fail same criterion</td>
+          <td>Block individual coaching → group intervention</td>
+          <td><span class="tag-sys">SYSTEMIC</span></td>
+        </tr>
+        <tr>
+          <td style="color: var(--accent);">cohort concentration ≥ 60%</td>
+          <td>Chi-squared p &lt; 0.05 on shared attribute</td>
+          <td>Targeted cohort intervention (trainer, shift, etc.)</td>
+          <td><span class="tag-cohort">COHORT</span></td>
+        </tr>
+        <tr>
+          <td style="color: var(--accent);">none of above</td>
+          <td>Failure isolated to 1–2 agents, no patterns</td>
+          <td>Generate individual coaching plan with specifics</td>
+          <td><span class="tag-ind">INDIVIDUAL</span></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="sl">Coaching Plan Output Schema</div>
+
+    <table class="schema-table">
+      <thead>
+        <tr><th>Field</th><th>Type</th><th>Description</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>classification</td>
+          <td><span class="type-badge str">enum</span></td>
+          <td>SYSTEMIC | COHORT | INDIVIDUAL</td>
+        </tr>
+        <tr>
+          <td>coaching_blocked</td>
+          <td><span class="type-badge bool">bool</span></td>
+          <td>True if systemic — prevents individual coaching actions from generating</td>
+        </tr>
+        <tr>
+          <td>root_cause</td>
+          <td><span class="type-badge str">string</span></td>
+          <td>SYSTEM_EVENT | PROCESS_CHANGE | WIDESPREAD_GAP | COHORT_PATTERN | PERFORMANCE_GAP</td>
+        </tr>
+        <tr>
+          <td>evidence</td>
+          <td><span class="type-badge obj">object</span></td>
+          <td>Supporting data — system event logs, KB update records, cohort analysis results</td>
+        </tr>
+        <tr>
+          <td>affected_agents[]</td>
+          <td><span class="type-badge arr">array</span></td>
+          <td>Agent IDs with this failure, with individual scores and evaluation references</td>
+        </tr>
+        <tr>
+          <td>recommended_action</td>
+          <td><span class="type-badge str">string</span></td>
+          <td>Specific next step — fix system, verify comms, cohort training, individual plan</td>
+        </tr>
+        <tr>
+          <td>coaching_plan</td>
+          <td><span class="type-badge obj">object | null</span></td>
+          <td>Only populated for INDIVIDUAL — targeted examples, training modules, follow-up date</td>
+        </tr>
+        <tr>
+          <td>composite_score</td>
+          <td><span class="type-badge int">float</span></td>
+          <td>Weighted: FCR(30%) + CSAT(25%) + AHT(20%) + Adherence(15%) + QA(10%)</td>
+        </tr>
+      </tbody>
+    </table>
+
+  </div>
+
+  <div class="right">
+
+    <div class="rs">
+      <div class="sl">Architecture Decisions</div>
+      <div class="insight-card">
+        <div class="ic-label">Why Gate-Based, Not ML Classification</div>
+        <div class="ic-text">
+          ML classifiers need <strong>labeled training data</strong> that doesn't exist yet — nobody has been tagging systemic vs. individual for years. Gate-based rules are <strong>explainable, auditable, and immediately deployable</strong>. Team leads can understand why a coaching action was blocked. Once we have 12+ months of classification data, we can train a model on top.
+        </div>
+      </div>
+      <div class="insight-card">
+        <div class="ic-label">Why Chi-Squared for Cohort Detection</div>
+        <div class="ic-text">
+          Simple concentration (e.g., "4 of 5 from same trainer") creates false positives when that trainer <strong>trained 60% of the floor</strong>. Chi-squared tests whether the observed concentration <strong>exceeds what you'd expect given the base rate</strong>. At p &lt; 0.05, we're 95% confident the pattern is real.
+        </div>
+      </div>
+      <div class="insight-card">
+        <div class="ic-label">Why coaching_blocked = True</div>
+        <div class="ic-text">
+          The hardest part isn't detection — it's <strong>preventing the wrong action</strong>. Without a hard block, supervisors default to coaching individuals because that's the familiar workflow. The <strong>coaching_blocked flag</strong> forces the system-fix path. It's not a suggestion; it's a gate.
+        </div>
+      </div>
+    </div>
+
+    <div class="rs">
+      <div class="sl">Systemic Check Protocol</div>
+      <ul class="check-list">
+        <li><span class="check-num">01</span>System health — outages, latency, routing errors during eval window?</li>
+        <li><span class="check-num">02</span>Pattern width — did 3+ agents fail same criterion? If yes, systemic until disproven.</li>
+        <li><span class="check-num">03</span>Process currency — was SOP/KB updated within 7 days of eval window?</li>
+        <li><span class="check-num">04</span>Routing accuracy — were calls correctly skill-matched for the failing interactions?</li>
+        <li><span class="check-num">05</span>Cohort analysis — do failing agents share hire date, trainer, shift, or site?</li>
+      </ul>
+    </div>
+
+    <div class="rs">
+      <div class="sl">Tech Stack</div>
+      <div style="margin-top: 4px;">
+        <span class="tech-tag">Python 3.11</span>
+        <span class="tech-tag">pandas</span>
+        <span class="tech-tag">scipy.stats</span>
+        <span class="tech-tag">Genesys QA API</span>
+        <span class="tech-tag">PostgreSQL</span>
+        <span class="tech-tag">FastAPI</span>
+        <span class="tech-tag">Chi-squared test</span>
+        <span class="tech-tag">Composite scoring</span>
+        <span class="tech-tag">n8n automation</span>
+        <span class="tech-tag">Power BI</span>
+      </div>
+    </div>
+
+    <div class="rs">
+      <div class="sl">Engine Performance</div>
+      <div class="metric-row">
+        <div class="mr-label">Interactions monitored</div>
+        <div class="mr-val accent">100%</div>
+      </div>
+      <div class="metric-row">
+        <div class="mr-label">Failures classified as systemic</div>
+        <div class="mr-val accent">60%</div>
+      </div>
+      <div class="metric-row">
+        <div class="mr-label">Misattributed coaching (before)</div>
+        <div class="mr-val" style="color: var(--error);">~45%</div>
+      </div>
+      <div class="metric-row">
+        <div class="mr-label">Misattributed coaching (after)</div>
+        <div class="mr-val positive">&lt;5%</div>
+      </div>
+      <div class="metric-row">
+        <div class="mr-label">FCR achieved</div>
+        <div class="mr-val accent">93%</div>
+      </div>
+      <div class="metric-row">
+        <div class="mr-label">CSAT maintained</div>
+        <div class="mr-val accent">90%+</div>
+      </div>
+    </div>
+
+    <div class="rs">
+      <div class="sl">Applicability Note</div>
+      <div class="ic-text" style="font-size: 11px; color: var(--text-muted); line-height: 1.6;">
+        This diagnostic layer sits on top of any automated QA platform — <strong style="color: var(--text-secondary);">Observe.AI, Calabrio, CallMiner, NICE Quality Central</strong>. The tool provides the scoring. This engine provides the <strong style="color: var(--text-secondary);">classification intelligence</strong> that determines whether the score should trigger a coaching action or a system investigation.
+      </div>
+    </div>
+
+  </div>
+</div>
+
+</body>
+</html>
